@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface KhoaPhongRepository extends JpaRepository<KhoaPhong, Long> {
     Optional<KhoaPhong> findByTenKhoaPhong(String tenKhoaPhong);
+    Optional<KhoaPhong> findByMaKhoaPhong(String maKhoaPhong);
 }

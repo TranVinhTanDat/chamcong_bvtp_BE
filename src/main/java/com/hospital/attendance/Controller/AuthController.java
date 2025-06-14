@@ -1,6 +1,5 @@
 package com.hospital.attendance.Controller;
 
-import com.hospital.attendance.Entity.ChamCong;
 import com.hospital.attendance.Entity.User;
 import com.hospital.attendance.Entity.TokenModel;
 import com.hospital.attendance.Repository.UserRepository;
@@ -50,7 +49,7 @@ public class AuthController {
     private KhoaPhongRepository khoaPhongRepository;
 
     @PostMapping("/dangnhap")
-    public ResponseEntity<?> dangNhap(@RequestBody User user) {
+    public ResponseEntity<?> dangNhap(@RequestBody User user)  {
         logger.info("Đang thử đăng nhập người dùng: {}", user.getTenDangNhap());
         try {
             authenticationManager.authenticate(
@@ -58,10 +57,10 @@ public class AuthController {
             );
             UserDetails userDetails = userService.loadUserByUsername(user.getTenDangNhap());
             User userDaDangNhap = userService.findByUsername(user.getTenDangNhap());
-            String jwt = jwtService.generateToken(userDetails, userDaDangNhap.getMa(), userDaDangNhap.getRole().getTenVaiTro());
+            String jwt = jwtService.generateToken(userDetails, userDaDangNhap.getId(), userDaDangNhap.getRole().getTenVaiTro());
             String refreshToken = jwtService.generateRefreshToken(userDetails);
             Long hetHanTrong = jwtService.getExpiresIn();
-            return ResponseEntity.ok(new TokenModel(jwt, refreshToken, hetHanTrong, userDaDangNhap.getRole().getTenVaiTro(), userDaDangNhap.getMa()));
+            return ResponseEntity.ok(new TokenModel(jwt, refreshToken, hetHanTrong, userDaDangNhap.getRole().getTenVaiTro(), userDaDangNhap.getId()));
         } catch (BadCredentialsException e) {
             logger.error("Sai thông tin đăng nhập cho người dùng: {}", user.getTenDangNhap());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Tên đăng nhập hoặc mật khẩu không đúng");

@@ -3,6 +3,9 @@ package com.hospital.attendance.Service;
 import com.hospital.attendance.Entity.NhanVien;
 import com.hospital.attendance.Repository.NhanVienRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,18 +27,19 @@ public class NhanVienService {
         return nhanVienRepository.save(nhanVien);
     }
 
-    public List<NhanVien> getAllNhanVien() {
-        return nhanVienRepository.findAll();
+    public Page<NhanVien> getAllNhanVien(int page, int size, Long khoaPhongId) {
+        Pageable pageable = PageRequest.of(page, size);
+        return nhanVienRepository.findByKhoaPhongId(khoaPhongId, pageable);
     }
 
-    public Optional<NhanVien> getNhanVienById(Long ma) {
-        return nhanVienRepository.findById(ma);
+    public Optional<NhanVien> getNhanVienById(Long id) {
+        return nhanVienRepository.findById(id);
     }
 
     @Transactional
-    public NhanVien updateNhanVien(Long ma, NhanVien nhanVienDetails) {
-        NhanVien nhanVien = nhanVienRepository.findById(ma)
-                .orElseThrow(() -> new IllegalStateException("Nhân viên với ID " + ma + " không tồn tại"));
+    public NhanVien updateNhanVien(Long id, NhanVien nhanVienDetails) {
+        NhanVien nhanVien = nhanVienRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Nhân viên với ID " + id + " không tồn tại"));
         nhanVien.setHoTen(nhanVienDetails.getHoTen());
         nhanVien.setEmail(nhanVienDetails.getEmail());
         nhanVien.setMaNV(nhanVienDetails.getMaNV());
@@ -47,9 +51,9 @@ public class NhanVienService {
     }
 
     @Transactional
-    public void deleteNhanVien(Long ma) {
-        NhanVien nhanVien = nhanVienRepository.findById(ma)
-                .orElseThrow(() -> new IllegalStateException("Nhân viên với ID " + ma + " không tồn tại"));
+    public void deleteNhanVien(Long id) {
+        NhanVien nhanVien = nhanVienRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Nhân viên với ID " + id + " không tồn tại"));
         nhanVienRepository.delete(nhanVien);
     }
 

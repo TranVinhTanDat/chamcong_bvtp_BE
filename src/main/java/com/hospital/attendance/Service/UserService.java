@@ -39,6 +39,12 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng với tên đăng nhập: " + tenDangNhap));
     }
 
+    // Thêm phương thức getUserByTenDangNhap
+    public User getUserByTenDangNhap(String tenDangNhap) {
+        return userRepository.findByTenDangNhap(tenDangNhap)
+                .orElseThrow(() -> new IllegalStateException("Không tìm thấy người dùng với tên đăng nhập: " + tenDangNhap));
+    }
+
     @Transactional
     public User saveEmployee(User user) {
         Optional<User> existingByUsername = userRepository.findByTenDangNhap(user.getTenDangNhap());

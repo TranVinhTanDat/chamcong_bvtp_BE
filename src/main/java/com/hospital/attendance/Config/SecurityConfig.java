@@ -53,6 +53,8 @@ public class SecurityConfig {
                         .requestMatchers("/chamcong/checkin").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
                         .requestMatchers("/chamcong/{ma}/trangthai").hasRole("ADMIN")
                         .requestMatchers("/chamcong/tonghop/**").hasRole("NGUOITONGHOP")
+                        .requestMatchers("/loai-nghi").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+                        .requestMatchers("/user/me").hasAnyRole("ADMIN", "NGUOICHAMCONG") // Thêm endpoint /user/me
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

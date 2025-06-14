@@ -15,7 +15,7 @@ import java.util.Date;
 public class NhanVien {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long ma;
+    private Long id;
 
     @Column(name = "ho_ten", nullable = false)
     private String hoTen;
@@ -24,18 +24,18 @@ public class NhanVien {
     private String email;
 
     @Column(name = "ma_nv")
-    private String maNV; // Cho phép null
+    private String maNV;
 
     @Temporal(TemporalType.DATE)
     @Column(name = "ngay_thang_nam_sinh")
-    private Date ngayThangNamSinh; // Ngày tháng năm sinh
+    private Date ngayThangNamSinh;
 
     @Column(name = "so_dien_thoai")
-    private String soDienThoai; // Số điện thoại
+    private String soDienThoai;
 
     @ManyToOne
     @JoinColumn(name = "chuc_vu_id")
-    private ChucVu chucVu; // Liên kết với bảng ChucVu
+    private ChucVu chucVu;
 
     @ManyToOne
     @JoinColumn(name = "khoa_phong_id", nullable = false)

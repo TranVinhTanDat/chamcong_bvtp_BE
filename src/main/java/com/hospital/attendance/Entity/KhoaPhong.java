@@ -16,7 +16,11 @@ public class KhoaPhong {
     @Column(name = "ten_khoa_phong", nullable = false, unique = true)
     private String tenKhoaPhong;
 
-    public KhoaPhong(String tenKhoaPhong) {
+    @Column(name = "ma_khoa_phong", nullable = false, unique = true, length = 50)
+    private String maKhoaPhong;
+
+    public KhoaPhong(String tenKhoaPhong, String maKhoaPhong) {
         this.tenKhoaPhong = tenKhoaPhong;
+        this.maKhoaPhong = maKhoaPhong;
     }
 }

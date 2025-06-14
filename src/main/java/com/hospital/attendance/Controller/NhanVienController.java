@@ -3,6 +3,7 @@ package com.hospital.attendance.Controller;
 import com.hospital.attendance.Entity.NhanVien;
 import com.hospital.attendance.Service.NhanVienService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -31,24 +32,27 @@ public class NhanVienController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
-    public ResponseEntity<List<NhanVien>> getAllNhanVien() {
-        List<NhanVien> nhanViens = nhanVienService.getAllNhanVien();
+    public ResponseEntity<Page<NhanVien>> getAllNhanVien(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) Long khoaPhongId) {
+        Page<NhanVien> nhanViens = nhanVienService.getAllNhanVien(page, size, khoaPhongId);
         return ResponseEntity.ok(nhanViens);
     }
 
-    @GetMapping("/{ma}")
+    @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
-    public ResponseEntity<NhanVien> getNhanVienById(@PathVariable Long ma) {
-        return nhanVienService.getNhanVienById(ma)
+    public ResponseEntity<NhanVien> getNhanVienById(@PathVariable Long id) {
+        return nhanVienService.getNhanVienById(id)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.badRequest().body(null)); // Trả về null với status 400 nếu không tìm thấy
+                .orElseGet(() -> ResponseEntity.badRequest().body(null));
     }
 
-    @PutMapping("/{ma}")
+    @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
-    public ResponseEntity<?> updateNhanVien(@PathVariable Long ma, @RequestBody NhanVien nhanVienDetails) {
+    public ResponseEntity<?> updateNhanVien(@PathVariable Long id, @RequestBody NhanVien nhanVienDetails) {
         try {
-            NhanVien updatedNhanVien = nhanVienService.updateNhanVien(ma, nhanVienDetails);
+            NhanVien updatedNhanVien = nhanVienService.updateNhanVien(id, nhanVienDetails);
             return ResponseEntity.ok("Cập nhật nhân viên thành công");
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -57,11 +61,11 @@ public class NhanVienController {
         }
     }
 
-    @DeleteMapping("/{ma}")
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
-    public ResponseEntity<?> deleteNhanVien(@PathVariable Long ma) {
+    public ResponseEntity<?> deleteNhanVien(@PathVariable Long id) {
         try {
-            nhanVienService.deleteNhanVien(ma);
+            nhanVienService.deleteNhanVien(id);
             return ResponseEntity.ok("Xóa nhân viên thành công");
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

@@ -16,7 +16,7 @@ import java.util.Date;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long ma;
+    private Long id;
 
     @Column(name = "ten_dang_nhap", unique = true, nullable = false)
     private String tenDangNhap;
