@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalTime;
-
 @Data
 @NoArgsConstructor
 @Entity
@@ -15,15 +13,10 @@ public class CaLamViec {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "ma_ca", nullable = false, unique = true)
-    private String maCa;
+    @ManyToOne
+    @JoinColumn(name = "ky_hieu_cham_cong_id", nullable = false)
+    private KyHieuChamCong kyHieuChamCong;
 
-    @Column(name = "ten_ca", nullable = false)
-    private String tenCa;
-
-    @Column(name = "thoi_gian_bat_dau", nullable = false)
-    private LocalTime thoiGianBatDau;
-
-    @Column(name = "thoi_gian_ket_thuc", nullable = false)
-    private LocalTime thoiGianKetThuc;
+    @Column(name = "ten_ca_lam_viec", nullable = false)
+    private String tenCaLamViec;
 }

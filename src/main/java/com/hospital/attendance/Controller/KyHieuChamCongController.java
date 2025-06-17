@@ -1,7 +1,7 @@
 package com.hospital.attendance.Controller;
 
-import com.hospital.attendance.Entity.LoaiNghi;
-import com.hospital.attendance.Service.LoaiNghiService; // Giả định có service này
+import com.hospital.attendance.Entity.KyHieuChamCong;
+import com.hospital.attendance.Service.KyHieuChamCongService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,16 +12,16 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/loai-nghi")
-public class LoaiNghiController {
+@RequestMapping("/ky-hieu-cham-cong")
+public class KyHieuChamCongController {
 
     @Autowired
-    private LoaiNghiService loaiNghiService; // Giả định service này tồn tại
+    private KyHieuChamCongService kyHieuChamCongService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
-    public ResponseEntity<List<LoaiNghi>> getAllLoaiNghi() {
-        List<LoaiNghi> loaiNghis = loaiNghiService.getAllLoaiNghi();
-        return ResponseEntity.ok(loaiNghis);
+    public ResponseEntity<List<KyHieuChamCong>> getAllKyHieuChamCong() {
+        List<KyHieuChamCong> kyHieuChamCongs = kyHieuChamCongService.getAllKyHieuChamCong();
+        return ResponseEntity.ok(kyHieuChamCongs);
     }
 }

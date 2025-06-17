@@ -36,8 +36,8 @@ public class ChamCong {
     private CaLamViec caLamViec;
 
     @ManyToOne
-    @JoinColumn(name = "loai_nghi_id")
-    private LoaiNghi loaiNghi;
+    @JoinColumn(name = "ky_hieu_cham_cong_id")
+    private KyHieuChamCong kyHieuChamCong;
 
     @Column(name = "ghi_chu")
     private String ghiChu;

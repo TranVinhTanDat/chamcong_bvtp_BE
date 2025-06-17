@@ -1,18 +1,7 @@
 package com.hospital.attendance.Service;
 
-
-import com.hospital.attendance.Entity.ChamCong;
-import com.hospital.attendance.Entity.NhanVien;
-import com.hospital.attendance.Entity.TrangThaiChamCong;
-import com.hospital.attendance.Entity.CaLamViec;
-import com.hospital.attendance.Entity.LoaiNghi;
-import com.hospital.attendance.Entity.User;
-import com.hospital.attendance.Repository.ChamCongRepository;
-import com.hospital.attendance.Repository.NhanVienRepository;
-import com.hospital.attendance.Repository.UserRepository;
-import com.hospital.attendance.Repository.TrangThaiChamCongRepository;
-import com.hospital.attendance.Repository.CaLamViecRepository;
-import com.hospital.attendance.Repository.LoaiNghiRepository;
+import com.hospital.attendance.Entity.*;
+import com.hospital.attendance.Repository.*;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -20,9 +9,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ChamCongService {
@@ -43,15 +32,15 @@ public class ChamCongService {
     private CaLamViecRepository caLamViecRepository;
 
     @Autowired
-    private LoaiNghiRepository loaiNghiRepository;
+    private KyHieuChamCongRepository kyHieuChamCongRepository;
 
     public ChamCong checkIn(String tenDangNhapChamCong, String nhanVienId, String nhanVienHoTen, String emailNhanVien,
-                            String trangThai, String maCa, String maLoaiNghi, String ghiChu) {
+                            String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu) {
         User chamCongUser = userRepository.findByTenDangNhap(tenDangNhapChamCong)
                 .orElseThrow(() -> new SecurityException("Người chấm công không tồn tại"));
 
         String vaiTroChamCong = chamCongUser.getRole().getTenVaiTro();
-        if (!vaiTroChamCong.equals("ADMIN") && !vaiTroChamCong.equals("NGUOICHAMCONG") && !vaiTroChamCong.equals("NGUOITONGHOP")) {
+        if (!vaiTroChamCong.equals("ADMIN") && !vaiTroChamCong.equals("NGUOICHAMCONG") && !vaiTroChamCong.equals("NGUOITONGHOP")) { // Thêm NGUOITONGHOP
             throw new SecurityException("Bạn không có quyền chấm công");
         }
 
@@ -74,7 +63,8 @@ public class ChamCongService {
             throw new SecurityException("Thiếu thông tin nhân viên (nhanVienId, nhanVienHoTen, hoặc emailNhanVien)");
         }
 
-        if (vaiTroChamCong.equals("NGUOICHAMCONG") && !chamCongUser.getKhoaPhong().getId().equals(nhanVien.getKhoaPhong().getId())) {
+        if ((vaiTroChamCong.equals("NGUOICHAMCONG") || vaiTroChamCong.equals("NGUOITONGHOP")) && // Thêm NGUOITONGHOP
+                !chamCongUser.getKhoaPhong().getId().equals(nhanVien.getKhoaPhong().getId())) {
             throw new SecurityException("Chỉ được chấm công cho nhân viên cùng khoa/phòng");
         }
 
@@ -93,20 +83,103 @@ public class ChamCongService {
         chamCong.setTrangThaiChamCong(trangThaiChamCong);
 
         if (trangThai.equals("LÀM")) {
-            chamCong.setCaLamViec(null);
+            if (caLamViecId == null) {
+                throw new IllegalStateException("Phải cung cấp caLamViecId khi trạng thái là LÀM");
+            }
+            try {
+                Long id = Long.parseLong(caLamViecId);
+                CaLamViec caLamViec = caLamViecRepository.findById(id)
+                        .orElseThrow(() -> new IllegalStateException("Ca làm việc với ID " + caLamViecId + " không tồn tại"));
+                chamCong.setCaLamViec(caLamViec);
+                chamCong.setKyHieuChamCong(caLamViec.getKyHieuChamCong());
+            } catch (NumberFormatException e) {
+                throw new IllegalStateException("caLamViecId phải là số hợp lệ");
+            }
         } else if (trangThai.equals("NGHỈ")) {
-            if (maLoaiNghi == null || ghiChu == null) {
-                throw new IllegalStateException("Phải cung cấp maLoaiNghi và ghiChu khi trạng thái là NGHỈ");
+            if (maKyHieuChamCong == null || ghiChu == null) {
+                throw new IllegalStateException("Phải cung cấp maKyHieuChamCong và ghiChu khi trạng thái là NGHỈ");
             }
-            LoaiNghi loaiNghi = loaiNghiRepository.findByMaLoaiNghi(maLoaiNghi)
-                    .orElseThrow(() -> new IllegalStateException("Loại nghỉ '" + maLoaiNghi + "' không tồn tại"));
-            if (!loaiNghi.isTrangThai()) {
-                throw new IllegalStateException("Loại nghỉ '" + maLoaiNghi + "' không được sử dụng");
+            KyHieuChamCong kyHieuChamCong = kyHieuChamCongRepository.findByMaKyHieu(maKyHieuChamCong)
+                    .orElseThrow(() -> new IllegalStateException("Ký hiệu chấm công '" + maKyHieuChamCong + "' không tồn tại"));
+            if (!kyHieuChamCong.isTrangThai()) {
+                throw new IllegalStateException("Ký hiệu chấm công '" + maKyHieuChamCong + "' không được sử dụng");
             }
-            chamCong.setLoaiNghi(loaiNghi);
+            chamCong.setKyHieuChamCong(kyHieuChamCong);
             chamCong.setGhiChu(ghiChu);
-        } else {
-            throw new IllegalStateException("Trạng thái phải là LÀM hoặc NGHỈ");
+
+            // Ưu tiên sử dụng caLamViecId từ payload nếu có
+            if (caLamViecId != null) {
+                try {
+                    Long id = Long.parseLong(caLamViecId);
+                    CaLamViec caLamViec = caLamViecRepository.findById(id)
+                            .orElseThrow(() -> new IllegalStateException("Ca làm việc với ID " + caLamViecId + " không tồn tại"));
+                    chamCong.setCaLamViec(caLamViec);
+                } catch (NumberFormatException e) {
+                    throw new IllegalStateException("caLamViecId phải là số hợp lệ");
+                }
+            } else {
+                // Nếu không có caLamViecId, lấy ca làm việc gần nhất
+                ChamCong lastChamCong = chamCongRepository.findLatestWithCaLamViecByNhanVienId(nhanVien.getId())
+                        .orElse(null);
+                chamCong.setCaLamViec(lastChamCong != null ? lastChamCong.getCaLamViec() : null);
+                System.out.println("CaLamViec for NGHỈ: " + (lastChamCong != null ? lastChamCong.getCaLamViec() : "null"));
+            }
+        }
+
+        return chamCongRepository.save(chamCong);
+    }
+
+    // Các phương thức khác giữ nguyên
+    public ChamCong capNhatTrangThai(Long id, String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu) {
+        ChamCong chamCong = chamCongRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Bản ghi chấm công với ID " + id + " không tồn tại"));
+        TrangThaiChamCong trangThaiChamCong = trangThaiChamCongRepository.findByTenTrangThai(trangThai)
+                .orElseThrow(() -> new IllegalStateException("Trạng thái '" + trangThai + "' không tồn tại"));
+        chamCong.setTrangThaiChamCong(trangThaiChamCong);
+
+        if (trangThai.equals("LÀM")) {
+            if (caLamViecId == null) {
+                throw new IllegalStateException("Phải cung cấp caLamViecId khi trạng thái là LÀM");
+            }
+            try {
+                Long caId = Long.parseLong(caLamViecId);
+                CaLamViec caLamViec = caLamViecRepository.findById(caId)
+                        .orElseThrow(() -> new IllegalStateException("Ca làm việc với ID " + caLamViecId + " không tồn tại"));
+                chamCong.setCaLamViec(caLamViec);
+                chamCong.setKyHieuChamCong(caLamViec.getKyHieuChamCong());
+            } catch (NumberFormatException e) {
+                throw new IllegalStateException("caLamViecId phải là số hợp lệ");
+            }
+            chamCong.setGhiChu(null);
+        } else if (trangThai.equals("NGHỈ")) {
+            if (maKyHieuChamCong == null || ghiChu == null) {
+                throw new IllegalStateException("Phải cung cấp maKyHieuChamCong và ghiChu khi trạng thái là NGHỈ");
+            }
+            KyHieuChamCong kyHieuChamCong = kyHieuChamCongRepository.findByMaKyHieu(maKyHieuChamCong)
+                    .orElseThrow(() -> new IllegalStateException("Ký hiệu chấm công '" + maKyHieuChamCong + "' không tồn tại"));
+            if (!kyHieuChamCong.isTrangThai()) {
+                throw new IllegalStateException("Ký hiệu chấm công '" + maKyHieuChamCong + "' không được sử dụng");
+            }
+            chamCong.setKyHieuChamCong(kyHieuChamCong);
+            chamCong.setGhiChu(ghiChu);
+
+            // Ưu tiên sử dụng caLamViecId từ payload nếu có
+            if (caLamViecId != null) {
+                try {
+                    Long caId = Long.parseLong(caLamViecId);
+                    CaLamViec caLamViec = caLamViecRepository.findById(caId)
+                            .orElseThrow(() -> new IllegalStateException("Ca làm việc với ID " + caLamViecId + " không tồn tại"));
+                    chamCong.setCaLamViec(caLamViec);
+                } catch (NumberFormatException e) {
+                    throw new IllegalStateException("caLamViecId phải là số hợp lệ");
+                }
+            } else {
+                // Nếu không có caLamViecId, lấy ca làm việc gần nhất
+                ChamCong lastChamCong = chamCongRepository.findLatestWithCaLamViecByNhanVienId(chamCong.getNhanVien().getId())
+                        .orElse(null);
+                chamCong.setCaLamViec(lastChamCong != null ? lastChamCong.getCaLamViec() : null);
+                System.out.println("CaLamViec for NGHỈ (update): " + (lastChamCong != null ? lastChamCong.getCaLamViec() : "null"));
+            }
         }
 
         return chamCongRepository.save(chamCong);
@@ -115,45 +188,21 @@ public class ChamCongService {
     public Page<ChamCong> layLichSuChamCong(String tenDangNhap, Integer year, Integer month, Integer day, Long khoaPhongId, int page, int size) {
         User user = userRepository.findByTenDangNhap(tenDangNhap)
                 .orElseThrow(() -> new SecurityException("Người dùng không tồn tại"));
+        String role = user.getRole().getTenVaiTro();
+        Long finalKhoaPhongId = khoaPhongId;
+
+        if (role.equals("NGUOICHAMCONG") || role.equals("NGUOITONGHOP")) { // Đã có NGUOITONGHOP
+            finalKhoaPhongId = user.getKhoaPhong().getId();
+        } else if (role.equals("ADMIN") && khoaPhongId == null) {
+            finalKhoaPhongId = null;
+        }
+
         Pageable pageable = PageRequest.of(page, size);
-        Page<ChamCong> chamCongs = chamCongRepository.findByKhoaPhongAndDateFilters(khoaPhongId, year, month, day, pageable);
+        Page<ChamCong> chamCongs = chamCongRepository.findByKhoaPhongAndDateFilters(finalKhoaPhongId, year, month, day, pageable);
         chamCongs.forEach(chamCong -> Hibernate.initialize(chamCong.getNhanVien()));
         return chamCongs;
     }
 
-    public ChamCong capNhatTrangThai(Long id, String trangThai, String maCa, String maLoaiNghi, String ghiChu) {
-        ChamCong chamCong = chamCongRepository.findById(id)
-                .orElseThrow(() -> new IllegalStateException("Bản ghi chấm công với ID " + id + " không tồn tại"));
-        TrangThaiChamCong trangThaiChamCong = trangThaiChamCongRepository.findByTenTrangThai(trangThai)
-                .orElseThrow(() -> new IllegalStateException("Trạng thái '" + trangThai + "' không tồn tại"));
-        chamCong.setTrangThaiChamCong(trangThaiChamCong);
-
-        if (trangThai.equals("LÀM")) {
-            chamCong.setCaLamViec(null);
-            chamCong.setLoaiNghi(null);
-            chamCong.setGhiChu(null);
-        } else if (trangThai.equals("NGHỈ")) {
-            if (maLoaiNghi == null || ghiChu == null) {
-                throw new IllegalStateException("Phải cung cấp maLoaiNghi và ghiChu khi trạng thái là NGHỈ");
-            }
-            LoaiNghi loaiNghi = loaiNghiRepository.findByMaLoaiNghi(maLoaiNghi)
-                    .orElseThrow(() -> new IllegalStateException("Loại nghỉ '" + maLoaiNghi + "' không tồn tại"));
-            if (!loaiNghi.isTrangThai()) {
-                throw new IllegalStateException("Loại nghỉ '" + maLoaiNghi + "' không được sử dụng");
-            }
-            chamCong.setLoaiNghi(loaiNghi);
-            chamCong.setGhiChu(ghiChu);
-            chamCong.setCaLamViec(null);
-        } else {
-            throw new IllegalStateException("Trạng thái phải là LÀM hoặc NGHỈ");
-        }
-
-        return chamCongRepository.save(chamCong);
-    }
-
-    public List<ChamCong> tongHopChamCongTheoPhongBan(Long khoaPhongId) {
-        return chamCongRepository.findByNhanVienKhoaPhongId(khoaPhongId);
-    }
 
     private Date getStartOfDay() {
         Date now = new Date();

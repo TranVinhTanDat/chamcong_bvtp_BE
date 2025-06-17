@@ -49,7 +49,7 @@ public class AuthController {
     private KhoaPhongRepository khoaPhongRepository;
 
     @PostMapping("/dangnhap")
-    public ResponseEntity<?> dangNhap(@RequestBody User user)  {
+    public ResponseEntity<?> dangNhap(@RequestBody User user) {
         logger.info("Đang thử đăng nhập người dùng: {}", user.getTenDangNhap());
         try {
             authenticationManager.authenticate(
@@ -57,10 +57,22 @@ public class AuthController {
             );
             UserDetails userDetails = userService.loadUserByUsername(user.getTenDangNhap());
             User userDaDangNhap = userService.findByUsername(user.getTenDangNhap());
-            String jwt = jwtService.generateToken(userDetails, userDaDangNhap.getId(), userDaDangNhap.getRole().getTenVaiTro());
+            String jwt = jwtService.generateToken(
+                    userDetails,
+                    userDaDangNhap.getId(),
+                    userDaDangNhap.getRole().getTenVaiTro(),
+                    userDaDangNhap.getKhoaPhong().getId()
+            );
             String refreshToken = jwtService.generateRefreshToken(userDetails);
             Long hetHanTrong = jwtService.getExpiresIn();
-            return ResponseEntity.ok(new TokenModel(jwt, refreshToken, hetHanTrong, userDaDangNhap.getRole().getTenVaiTro(), userDaDangNhap.getId()));
+            return ResponseEntity.ok(new TokenModel(
+                    jwt,
+                    refreshToken,
+                    hetHanTrong,
+                    userDaDangNhap.getRole().getTenVaiTro(),
+                    userDaDangNhap.getId(),
+                    userDaDangNhap.getKhoaPhong().getId()
+            ));
         } catch (BadCredentialsException e) {
             logger.error("Sai thông tin đăng nhập cho người dùng: {}", user.getTenDangNhap());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Tên đăng nhập hoặc mật khẩu không đúng");
@@ -81,7 +93,6 @@ public class AuthController {
                 throw new IllegalStateException("Khoa/phòng với ID " + khoaPhongId + " không tồn tại");
             }
             user.setKhoaPhong(khoaPhongRepository.findById(khoaPhongId).get());
-
             user.setMatKhau(passwordEncoder.encode(user.getMatKhau()));
             userService.saveEmployee(user);
             return ResponseEntity.ok("Đăng ký người dùng thành công");

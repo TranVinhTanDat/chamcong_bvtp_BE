@@ -15,8 +15,8 @@ import java.util.Optional;
 public interface ChamCongRepository extends JpaRepository<ChamCong, Long> {
     List<ChamCong> findByNhanVienId(Long id);
     Optional<ChamCong> findByNhanVienAndThoiGianCheckInBetween(NhanVien nhanVien, Date start, Date end);
-    @Query("SELECT c FROM ChamCong c WHERE c.nhanVien.khoaPhong.id = :khoaPhongId")
-    List<ChamCong> findByNhanVienKhoaPhongId(@Param("khoaPhongId") Long khoaPhongId);
+
+
 
     @Query("SELECT c FROM ChamCong c WHERE (:khoaPhongId IS NULL OR c.nhanVien.khoaPhong.id = :khoaPhongId) " +
             "AND (:year IS NULL OR YEAR(c.thoiGianCheckIn) = :year) " +
@@ -28,4 +28,8 @@ public interface ChamCongRepository extends JpaRepository<ChamCong, Long> {
             @Param("month") Integer month,
             @Param("day") Integer day,
             Pageable pageable);
+
+    @Query("SELECT c FROM ChamCong c WHERE c.nhanVien.id = :nhanVienId AND c.caLamViec IS NOT NULL " +
+            "ORDER BY c.thoiGianCheckIn DESC LIMIT 1")
+    Optional<ChamCong> findLatestWithCaLamViecByNhanVienId(@Param("nhanVienId") Long nhanVienId);
 }

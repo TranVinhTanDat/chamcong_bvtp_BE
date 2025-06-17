@@ -7,17 +7,17 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @Entity
-@Table(name = "loai_nghi")
-public class LoaiNghi {
+@Table(name = "ky_hieu_cham_cong")
+public class KyHieuChamCong {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "ma_loai_nghi", nullable = false, unique = true)
-    private String maLoaiNghi;
+    @Column(name = "ma_ky_hieu", nullable = false, unique = true)
+    private String maKyHieu;
 
-    @Column(name = "ten_loai_nghi", nullable = false)
-    private String tenLoaiNghi;
+    @Column(name = "ten_ky_hieu", nullable = false)
+    private String tenKyHieu;
 
     @Column(name = "trang_thai", nullable = false)
     private boolean trangThai;
@@ -25,9 +25,9 @@ public class LoaiNghi {
     @Column(name = "ghi_chu")
     private String ghiChu;
 
-    public LoaiNghi(String maLoaiNghi, String tenLoaiNghi, boolean trangThai, String ghiChu) {
-        this.maLoaiNghi = maLoaiNghi;
-        this.tenLoaiNghi = tenLoaiNghi;
+    public KyHieuChamCong(String maKyHieu, String tenKyHieu, boolean trangThai, String ghiChu) {
+        this.maKyHieu = maKyHieu;
+        this.tenKyHieu = tenKyHieu;
         this.trangThai = trangThai;
         this.ghiChu = ghiChu;
     }
