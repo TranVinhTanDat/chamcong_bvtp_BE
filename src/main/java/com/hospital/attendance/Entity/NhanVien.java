@@ -3,6 +3,8 @@ package com.hospital.attendance.Entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.PastOrPresent;
 
 import java.util.Date;
 
@@ -28,6 +30,8 @@ public class NhanVien {
 
     @Temporal(TemporalType.DATE)
     @Column(name = "ngay_thang_nam_sinh")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
+    @PastOrPresent(message = "Ngày sinh không được là tương lai")
     private Date ngayThangNamSinh;
 
     @Column(name = "so_dien_thoai")
@@ -40,4 +44,7 @@ public class NhanVien {
     @ManyToOne
     @JoinColumn(name = "khoa_phong_id", nullable = false)
     private KhoaPhong khoaPhong;
+
+    @Column(name = "trang_thai", nullable = false)
+    private Integer trangThai = 1;
 }

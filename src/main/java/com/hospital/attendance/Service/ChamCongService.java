@@ -9,9 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.Date;
-import java.util.List;
 
 @Service
 public class ChamCongService {
@@ -40,7 +38,7 @@ public class ChamCongService {
                 .orElseThrow(() -> new SecurityException("Người chấm công không tồn tại"));
 
         String vaiTroChamCong = chamCongUser.getRole().getTenVaiTro();
-        if (!vaiTroChamCong.equals("ADMIN") && !vaiTroChamCong.equals("NGUOICHAMCONG") && !vaiTroChamCong.equals("NGUOITONGHOP")) { // Thêm NGUOITONGHOP
+        if (!vaiTroChamCong.equals("ADMIN") && !vaiTroChamCong.equals("NGUOICHAMCONG") && !vaiTroChamCong.equals("NGUOITONGHOP")) {
             throw new SecurityException("Bạn không có quyền chấm công");
         }
 
@@ -48,22 +46,22 @@ public class ChamCongService {
         if (nhanVienId != null) {
             try {
                 Long id = Long.parseLong(nhanVienId);
-                nhanVien = nhanVienRepository.findById(id)
-                        .orElseThrow(() -> new SecurityException("Nhân viên với ID " + id + " không tồn tại"));
+                nhanVien = nhanVienRepository.findByIdAndTrangThai(id, 1)
+                        .orElseThrow(() -> new SecurityException("Nhân viên với ID " + id + " không tồn tại hoặc đã bị vô hiệu hóa"));
             } catch (NumberFormatException e) {
                 throw new SecurityException("nhanVienId phải là số hợp lệ (ID)");
             }
         } else if (nhanVienHoTen != null) {
-            nhanVien = nhanVienRepository.findByHoTen(nhanVienHoTen)
-                    .orElseThrow(() -> new SecurityException("Nhân viên với họ tên '" + nhanVienHoTen + "' không tồn tại"));
+            nhanVien = nhanVienRepository.findByHoTenAndTrangThai(nhanVienHoTen, 1)
+                    .orElseThrow(() -> new SecurityException("Nhân viên với họ tên '" + nhanVienHoTen + "' không tồn tại hoặc đã bị vô hiệu hóa"));
         } else if (emailNhanVien != null) {
-            nhanVien = nhanVienRepository.findByEmail(emailNhanVien)
-                    .orElseThrow(() -> new SecurityException("Nhân viên với email '" + emailNhanVien + "' không tồn tại"));
+            nhanVien = nhanVienRepository.findByEmailAndTrangThai(emailNhanVien, 1)
+                    .orElseThrow(() -> new SecurityException("Nhân viên với email '" + emailNhanVien + "' không tồn tại hoặc đã bị vô hiệu hóa"));
         } else {
             throw new SecurityException("Thiếu thông tin nhân viên (nhanVienId, nhanVienHoTen, hoặc emailNhanVien)");
         }
 
-        if ((vaiTroChamCong.equals("NGUOICHAMCONG") || vaiTroChamCong.equals("NGUOITONGHOP")) && // Thêm NGUOITONGHOP
+        if ((vaiTroChamCong.equals("NGUOICHAMCONG") || vaiTroChamCong.equals("NGUOITONGHOP")) &&
                 !chamCongUser.getKhoaPhong().getId().equals(nhanVien.getKhoaPhong().getId())) {
             throw new SecurityException("Chỉ được chấm công cho nhân viên cùng khoa/phòng");
         }
@@ -129,10 +127,13 @@ public class ChamCongService {
         return chamCongRepository.save(chamCong);
     }
 
-    // Các phương thức khác giữ nguyên
     public ChamCong capNhatTrangThai(Long id, String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu) {
         ChamCong chamCong = chamCongRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("Bản ghi chấm công với ID " + id + " không tồn tại"));
+        // Kiểm tra nhân viên còn hoạt động
+        NhanVien nhanVien = nhanVienRepository.findByIdAndTrangThai(chamCong.getNhanVien().getId(), 1)
+                .orElseThrow(() -> new IllegalStateException("Nhân viên đã bị vô hiệu hóa"));
+
         TrangThaiChamCong trangThaiChamCong = trangThaiChamCongRepository.findByTenTrangThai(trangThai)
                 .orElseThrow(() -> new IllegalStateException("Trạng thái '" + trangThai + "' không tồn tại"));
         chamCong.setTrangThaiChamCong(trangThaiChamCong);
@@ -191,7 +192,7 @@ public class ChamCongService {
         String role = user.getRole().getTenVaiTro();
         Long finalKhoaPhongId = khoaPhongId;
 
-        if (role.equals("NGUOICHAMCONG") || role.equals("NGUOITONGHOP")) { // Đã có NGUOITONGHOP
+        if (role.equals("NGUOICHAMCONG") || role.equals("NGUOITONGHOP")) {
             finalKhoaPhongId = user.getKhoaPhong().getId();
         } else if (role.equals("ADMIN") && khoaPhongId == null) {
             finalKhoaPhongId = null;
@@ -202,7 +203,6 @@ public class ChamCongService {
         chamCongs.forEach(chamCong -> Hibernate.initialize(chamCong.getNhanVien()));
         return chamCongs;
     }
-
 
     private Date getStartOfDay() {
         Date now = new Date();

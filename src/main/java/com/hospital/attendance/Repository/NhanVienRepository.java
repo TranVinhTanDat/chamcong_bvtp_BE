@@ -13,11 +13,13 @@ import java.util.Optional;
 
 @Repository
 public interface NhanVienRepository extends JpaRepository<NhanVien, Long> {
-    Optional<NhanVien> findByEmail(String email);
-    Optional<NhanVien> findByHoTen(String hoTen);
-    List<NhanVien> findByKhoaPhongId(Long khoaPhongId);
-    Optional<NhanVien> findByMaNV(String maNV);
+    Optional<NhanVien> findByEmailAndTrangThai(String email, Integer trangThai);
+    Optional<NhanVien> findByHoTenAndTrangThai(String hoTen, Integer trangThai);
+    Optional<NhanVien> findByMaNVAndTrangThai(String maNV, Integer trangThai);
+    List<NhanVien> findByKhoaPhongIdAndTrangThai(Long khoaPhongId, Integer trangThai);
 
-    @Query("SELECT n FROM NhanVien n WHERE (:khoaPhongId IS NULL OR n.khoaPhong.id = :khoaPhongId)")
-    Page<NhanVien> findByKhoaPhongId(@Param("khoaPhongId") Long khoaPhongId, Pageable pageable);
+    @Query("SELECT n FROM NhanVien n WHERE (:khoaPhongId IS NULL OR n.khoaPhong.id = :khoaPhongId) AND n.trangThai = :trangThai")
+    Page<NhanVien> findByKhoaPhongIdAndTrangThai(@Param("khoaPhongId") Long khoaPhongId, @Param("trangThai") Integer trangThai, Pageable pageable);
+
+    Optional<NhanVien> findByIdAndTrangThai(Long id, Integer trangThai);
 }

@@ -19,6 +19,7 @@ public interface ChamCongRepository extends JpaRepository<ChamCong, Long> {
 
 
     @Query("SELECT c FROM ChamCong c WHERE (:khoaPhongId IS NULL OR c.nhanVien.khoaPhong.id = :khoaPhongId) " +
+            "AND c.nhanVien.trangThai = 1 " +
             "AND (:year IS NULL OR YEAR(c.thoiGianCheckIn) = :year) " +
             "AND (:month IS NULL OR MONTH(c.thoiGianCheckIn) = :month) " +
             "AND (:day IS NULL OR DAY(c.thoiGianCheckIn) = :day)")
