@@ -1,4 +1,3 @@
-// ===== ChamCongService.java - Version hoàn chỉnh =====
 package com.hospital.attendance.Service;
 
 import com.hospital.attendance.Entity.*;
@@ -10,6 +9,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
@@ -33,8 +34,9 @@ public class ChamCongService {
     @Autowired
     private KyHieuChamCongRepository kyHieuChamCongRepository;
 
+    // UPDATED: Thêm parameter filterDate
     public ChamCong checkIn(String tenDangNhapChamCong, String nhanVienId, String nhanVienHoTen, String emailNhanVien,
-                            String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu) {
+                            String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu, String filterDate) {
 
         // 1. Kiểm tra quyền người chấm công
         User chamCongUser = userRepository.findByTenDangNhap(tenDangNhapChamCong)
@@ -51,11 +53,12 @@ public class ChamCongService {
         // 3. Kiểm tra quyền chấm công cho nhân viên này
         kiemTraQuyenChamCongChoNhanVien(chamCongUser, nhanVien, vaiTroChamCong);
 
-        // 4. Tạo khoảng thời gian trong ngày
-        java.sql.Date startOfDay = new java.sql.Date(getStartOfDay().getTime());
-        java.sql.Date endOfDay = new java.sql.Date(getEndOfDay().getTime());
+        // 4. UPDATED: Tạo khoảng thời gian dựa trên filterDate hoặc ngày hiện tại
+        Date[] dateRange = getDateRange(filterDate);
+        java.sql.Date startOfDay = new java.sql.Date(dateRange[0].getTime());
+        java.sql.Date endOfDay = new java.sql.Date(dateRange[1].getTime());
 
-        // 5. KIỂM TRA GIỚI HẠN 2 LẦN CHẤM CÔNG TRONG NGÀY
+        // 5. KIỂM TRA GIỚI HẠN 2 LẦN CHẤM CÔNG TRONG NGÀY được lọc
         Long soLanChamCongTrongNgay = chamCongRepository.countByNhanVienAndThoiGianCheckInBetween(
                 nhanVien, startOfDay, endOfDay);
 
@@ -64,7 +67,17 @@ public class ChamCongService {
             List<ChamCong> danhSachChamCongTrongNgay = chamCongRepository.findByNhanVienAndDateRange(
                     nhanVien, startOfDay, endOfDay);
 
-            StringBuilder thongBao = new StringBuilder("Nhân viên đã chấm công đủ 2 lần trong ngày hôm nay: ");
+            // UPDATED: Tạo thông báo với ngày cụ thể
+            String ngayHienThi;
+            if (filterDate != null && !filterDate.isEmpty()) {
+                ngayHienThi = "ngày " + filterDate;
+            } else {
+                // Nếu không có filterDate, tạo string ngày hiện tại
+                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                ngayHienThi = "ngày " + sdf.format(new Date()) + " (hôm nay)";
+            }
+
+            StringBuilder thongBao = new StringBuilder("Nhân viên đã chấm công đủ 2 lần trong " + ngayHienThi + ": ");
             for (int i = 0; i < danhSachChamCongTrongNgay.size(); i++) {
                 ChamCong cc = danhSachChamCongTrongNgay.get(i);
                 thongBao.append("Lần ").append(i + 1).append(": ")
@@ -85,15 +98,23 @@ public class ChamCongService {
                 Long caId = Long.parseLong(caLamViecId);
                 if (chamCongRepository.findByNhanVienAndCaLamViecAndThoiGianCheckInBetween(
                         nhanVien, caId, startOfDay, endOfDay).isPresent()) {
-                    throw new IllegalStateException("Nhân viên này đã được check-in cho ca làm việc này trong ngày hôm nay");
+                    // UPDATED: Tạo thông báo với ngày cụ thể
+                    String ngayHienThi;
+                    if (filterDate != null && !filterDate.isEmpty()) {
+                        ngayHienThi = "ngày " + filterDate;
+                    } else {
+                        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                        ngayHienThi = "ngày " + sdf.format(new Date()) + " (hôm nay)";
+                    }
+                    throw new IllegalStateException("Nhân viên này đã được check-in cho ca làm việc này trong " + ngayHienThi);
                 }
             } catch (NumberFormatException e) {
                 throw new IllegalStateException("caLamViecId phải là số hợp lệ");
             }
         }
 
-        // 7. Tạo bản ghi chấm công mới
-        return taoMoiBanGhiChamCong(nhanVien, trangThai, caLamViecId, maKyHieuChamCong, ghiChu);
+        // 7. Tạo bản ghi chấm công mới với thời gian hiện tại hoặc thời gian được chỉ định
+        return taoMoiBanGhiChamCong(nhanVien, trangThai, caLamViecId, maKyHieuChamCong, ghiChu, filterDate);
     }
 
     public ChamCong capNhatTrangThai(Long id, String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu) {
@@ -104,9 +125,11 @@ public class ChamCongService {
         NhanVien nhanVien = nhanVienRepository.findByIdAndTrangThai(chamCong.getNhanVien().getId(), 1)
                 .orElseThrow(() -> new IllegalStateException("Nhân viên đã bị vô hiệu hóa"));
 
-        // Tạo khoảng thời gian trong ngày
-        java.sql.Date startOfDay = new java.sql.Date(getStartOfDay().getTime());
-        java.sql.Date endOfDay = new java.sql.Date(getEndOfDay().getTime());
+        // Tạo khoảng thời gian trong ngày của bản ghi hiện tại
+        Date chamCongDate = chamCong.getThoiGianCheckIn();
+        Date[] dateRange = getDateRangeFromDate(chamCongDate);
+        java.sql.Date startOfDay = new java.sql.Date(dateRange[0].getTime());
+        java.sql.Date endOfDay = new java.sql.Date(dateRange[1].getTime());
 
         // KIỂM TRA TRÙNG LẶP CA CỤTHỂ khi cập nhật thành "LÀM"
         if ("LÀM".equals(trangThai) && caLamViecId != null) {
@@ -117,7 +140,10 @@ public class ChamCongService {
                                 nhanVien, caId, startOfDay, endOfDay)
                         .filter(c -> !c.getId().equals(id))
                         .isPresent()) {
-                    throw new IllegalStateException("Nhân viên này đã được check-in cho ca làm việc này trong ngày hôm nay");
+                    // Tạo thông báo với ngày cụ thể từ bản ghi hiện tại
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                    String ngayHienThi = "ngày " + sdf.format(chamCongDate);
+                    throw new IllegalStateException("Nhân viên này đã được check-in cho ca làm việc này trong " + ngayHienThi);
                 }
             } catch (NumberFormatException e) {
                 throw new IllegalStateException("caLamViecId phải là số hợp lệ");
@@ -175,10 +201,33 @@ public class ChamCongService {
         }
     }
 
-    private ChamCong taoMoiBanGhiChamCong(NhanVien nhanVien, String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu) {
+    // UPDATED: Thêm parameter filterDate
+    private ChamCong taoMoiBanGhiChamCong(NhanVien nhanVien, String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu, String filterDate) {
         ChamCong chamCong = new ChamCong();
         chamCong.setNhanVien(nhanVien);
-        chamCong.setThoiGianCheckIn(new Date());
+
+        // Nếu có filterDate, set thời gian theo ngày đó, nếu không thì dùng thời gian hiện tại
+        if (filterDate != null && !filterDate.isEmpty()) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                Date filterDateParsed = sdf.parse(filterDate);
+                // Set thời gian hiện tại nhưng ngày theo filter
+                Calendar cal = Calendar.getInstance();
+                Calendar filterCal = Calendar.getInstance();
+                filterCal.setTime(filterDateParsed);
+
+                cal.set(Calendar.YEAR, filterCal.get(Calendar.YEAR));
+                cal.set(Calendar.MONTH, filterCal.get(Calendar.MONTH));
+                cal.set(Calendar.DAY_OF_MONTH, filterCal.get(Calendar.DAY_OF_MONTH));
+
+                chamCong.setThoiGianCheckIn(cal.getTime());
+            } catch (ParseException e) {
+                // Nếu parse lỗi, dùng thời gian hiện tại
+                chamCong.setThoiGianCheckIn(new Date());
+            }
+        } else {
+            chamCong.setThoiGianCheckIn(new Date());
+        }
 
         // Set trạng thái chấm công
         TrangThaiChamCong trangThaiChamCongEntity = trangThaiChamCongRepository.findByTenTrangThai(trangThai)
@@ -257,6 +306,43 @@ public class ChamCongService {
         }
     }
 
+    // UPDATED: Thêm logic xử lý filterDate
+    private Date[] getDateRange(String filterDate) {
+        if (filterDate != null && !filterDate.isEmpty()) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                Date filterDateParsed = sdf.parse(filterDate);
+                return getDateRangeFromDate(filterDateParsed);
+            } catch (ParseException e) {
+                // Nếu parse lỗi, dùng ngày hiện tại
+                return getDateRangeFromDate(new Date());
+            }
+        } else {
+            return getDateRangeFromDate(new Date());
+        }
+    }
+
+    private Date[] getDateRangeFromDate(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+
+        // Start of day
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date startOfDay = cal.getTime();
+
+        // End of day
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE, 59);
+        cal.set(Calendar.SECOND, 59);
+        cal.set(Calendar.MILLISECOND, 999);
+        Date endOfDay = cal.getTime();
+
+        return new Date[]{startOfDay, endOfDay};
+    }
+
     private Date getStartOfDay() {
         Date now = new Date();
         return new Date(now.getTime() - now.getTime() % (24 * 60 * 60 * 1000));
@@ -270,9 +356,9 @@ public class ChamCongService {
     // ===== ADDITIONAL HELPER METHODS =====
 
     /**
-     * Kiểm tra trạng thái chấm công của nhân viên trong ngày
+     * UPDATED: Kiểm tra trạng thái chấm công của nhân viên trong ngày được lọc
      */
-    public Map<String, Object> kiemTraTrangThaiChamCongTrongNgay(String tenDangNhap, String nhanVienId, String nhanVienHoTen, String emailNhanVien) {
+    public Map<String, Object> kiemTraTrangThaiChamCongTrongNgay(String tenDangNhap, String nhanVienId, String nhanVienHoTen, String emailNhanVien, String filterDate) {
         // Kiểm tra quyền
         User chamCongUser = userRepository.findByTenDangNhap(tenDangNhap)
                 .orElseThrow(() -> new SecurityException("Người dùng không tồn tại"));
@@ -284,9 +370,10 @@ public class ChamCongService {
         String vaiTro = chamCongUser.getRole().getTenVaiTro();
         kiemTraQuyenChamCongChoNhanVien(chamCongUser, nhanVien, vaiTro);
 
-        // Lấy thông tin chấm công trong ngày
-        java.sql.Date startOfDay = new java.sql.Date(getStartOfDay().getTime());
-        java.sql.Date endOfDay = new java.sql.Date(getEndOfDay().getTime());
+        // UPDATED: Lấy thông tin chấm công trong ngày được lọc
+        Date[] dateRange = getDateRange(filterDate);
+        java.sql.Date startOfDay = new java.sql.Date(dateRange[0].getTime());
+        java.sql.Date endOfDay = new java.sql.Date(dateRange[1].getTime());
 
         Long soLanChamCong = chamCongRepository.countByNhanVienAndThoiGianCheckInBetween(
                 nhanVien, startOfDay, endOfDay);
@@ -314,9 +401,9 @@ public class ChamCongService {
     }
 
     /**
-     * Lấy chi tiết chấm công của nhân viên trong ngày hôm nay
+     * UPDATED: Lấy chi tiết chấm công của nhân viên trong ngày được lọc
      */
-    public List<ChamCong> layChiTietChamCongHomNay(String tenDangNhap, String nhanVienId, String nhanVienHoTen, String emailNhanVien) {
+    public List<ChamCong> layChiTietChamCongHomNay(String tenDangNhap, String nhanVienId, String nhanVienHoTen, String emailNhanVien, String filterDate) {
         // Kiểm tra quyền
         User chamCongUser = userRepository.findByTenDangNhap(tenDangNhap)
                 .orElseThrow(() -> new SecurityException("Người dùng không tồn tại"));
@@ -328,9 +415,10 @@ public class ChamCongService {
         String vaiTro = chamCongUser.getRole().getTenVaiTro();
         kiemTraQuyenChamCongChoNhanVien(chamCongUser, nhanVien, vaiTro);
 
-        // Lấy chi tiết chấm công trong ngày
-        java.sql.Date startOfDay = new java.sql.Date(getStartOfDay().getTime());
-        java.sql.Date endOfDay = new java.sql.Date(getEndOfDay().getTime());
+        // UPDATED: Lấy chi tiết chấm công trong ngày được lọc
+        Date[] dateRange = getDateRange(filterDate);
+        java.sql.Date startOfDay = new java.sql.Date(dateRange[0].getTime());
+        java.sql.Date endOfDay = new java.sql.Date(dateRange[1].getTime());
 
         return chamCongRepository.findByNhanVienAndDateRange(nhanVien, startOfDay, endOfDay);
     }

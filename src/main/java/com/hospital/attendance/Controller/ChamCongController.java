@@ -39,6 +39,9 @@ public class ChamCongController {
         String maKyHieuChamCong = request.get("maKyHieuChamCong");
         String ghiChu = request.get("ghiChu");
 
+        // THÊM MỚI: Nhận thông tin ngày được lọc từ frontend
+        String filterDate = request.get("filterDate"); // Format: "dd-MM-yyyy"
+
         if (nhanVienId == null && nhanVienHoTen == null && emailNhanVien == null) {
             return ResponseEntity.badRequest().body("{\"error\": \"Thiếu thông tin nhân viên (nhanVienId, nhanVienHoTen, hoặc emailNhanVien)\"}");
         }
@@ -54,7 +57,7 @@ public class ChamCongController {
 
         try {
             ChamCong chamCong = chamCongService.checkIn(tenDangNhap, nhanVienId, nhanVienHoTen, emailNhanVien,
-                    trangThai, caLamViecId, maKyHieuChamCong, ghiChu);
+                    trangThai, caLamViecId, maKyHieuChamCong, ghiChu, filterDate);
             return ResponseEntity.ok("{\"message\": \"Check-in thành công\"}");
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
@@ -95,7 +98,7 @@ public class ChamCongController {
     }
 
     @GetMapping("/lichsu")
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')") // Thêm NGUOITONGHOP
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
     public ResponseEntity<?> layLichSuChamCong(
             @RequestHeader("Authorization") String token,
             @RequestParam(required = false) Integer year,
@@ -110,7 +113,7 @@ public class ChamCongController {
             String role = jwtService.extractRole(token.substring(7));
             Long finalKhoaPhongId = khoaPhongId;
 
-            if (role.equals("NGUOICHAMCONG") || role.equals("NGUOITONGHOP")) { // Áp dụng giới hạn cho NGUOITONGHOP
+            if (role.equals("NGUOICHAMCONG") || role.equals("NGUOITONGHOP")) {
                 finalKhoaPhongId = userKhoaPhongId;
             } else if (role.equals("ADMIN") && khoaPhongId == null) {
                 finalKhoaPhongId = null;
@@ -131,7 +134,8 @@ public class ChamCongController {
             @RequestHeader("Authorization") String token,
             @RequestParam(required = false) String nhanVienId,
             @RequestParam(required = false) String nhanVienHoTen,
-            @RequestParam(required = false) String emailNhanVien) {
+            @RequestParam(required = false) String emailNhanVien,
+            @RequestParam(required = false) String filterDate) { // THÊM MỚI
 
         String tenDangNhap = jwtService.extractUsername(token.substring(7));
 
@@ -141,7 +145,7 @@ public class ChamCongController {
 
         try {
             Map<String, Object> trangThai = chamCongService.kiemTraTrangThaiChamCongTrongNgay(
-                    tenDangNhap, nhanVienId, nhanVienHoTen, emailNhanVien);
+                    tenDangNhap, nhanVienId, nhanVienHoTen, emailNhanVien, filterDate);
             return ResponseEntity.ok(trangThai);
         } catch (SecurityException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("{\"error\": \"" + e.getMessage() + "\"}");
@@ -150,16 +154,14 @@ public class ChamCongController {
         }
     }
 
-    /**
-     * Endpoint để lấy chi tiết chấm công của nhân viên trong ngày hôm nay
-     */
     @GetMapping("/chitiet-homnay")
     @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
     public ResponseEntity<?> layChiTietChamCongHomNay(
             @RequestHeader("Authorization") String token,
             @RequestParam(required = false) String nhanVienId,
             @RequestParam(required = false) String nhanVienHoTen,
-            @RequestParam(required = false) String emailNhanVien) {
+            @RequestParam(required = false) String emailNhanVien,
+            @RequestParam(required = false) String filterDate) { // THÊM MỚI
 
         String tenDangNhap = jwtService.extractUsername(token.substring(7));
 
@@ -169,7 +171,7 @@ public class ChamCongController {
 
         try {
             List<ChamCong> chiTiet = chamCongService.layChiTietChamCongHomNay(
-                    tenDangNhap, nhanVienId, nhanVienHoTen, emailNhanVien);
+                    tenDangNhap, nhanVienId, nhanVienHoTen, emailNhanVien, filterDate);
             return ResponseEntity.ok(chiTiet);
         } catch (SecurityException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("{\"error\": \"" + e.getMessage() + "\"}");
