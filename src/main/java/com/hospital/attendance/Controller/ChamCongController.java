@@ -38,9 +38,7 @@ public class ChamCongController {
         String caLamViecId = request.get("caLamViecId");
         String maKyHieuChamCong = request.get("maKyHieuChamCong");
         String ghiChu = request.get("ghiChu");
-
-        // THÊM MỚI: Nhận thông tin ngày được lọc từ frontend
-        String filterDate = request.get("filterDate"); // Format: "dd-MM-yyyy"
+        String filterDate = request.get("filterDate");
 
         if (nhanVienId == null && nhanVienHoTen == null && emailNhanVien == null) {
             return ResponseEntity.badRequest().body("{\"error\": \"Thiếu thông tin nhân viên (nhanVienId, nhanVienHoTen, hoặc emailNhanVien)\"}");
@@ -48,8 +46,9 @@ public class ChamCongController {
         if (trangThai == null || (!trangThai.equals("LÀM") && !trangThai.equals("NGHỈ"))) {
             return ResponseEntity.badRequest().body("{\"error\": \"Trạng thái phải là LÀM hoặc NGHỈ\"}");
         }
-        if (trangThai.equals("LÀM") && caLamViecId == null) {
-            return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp caLamViecId khi trạng thái là LÀM\"}");
+        // UPDATED: Yêu cầu caLamViecId cho cả LÀM và NGHỈ
+        if (caLamViecId == null) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp caLamViecId\"}");
         }
         if (trangThai.equals("NGHỈ") && (maKyHieuChamCong == null || ghiChu == null)) {
             return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp maKyHieuChamCong và ghiChu khi trạng thái là NGHỈ\"}");
@@ -80,8 +79,9 @@ public class ChamCongController {
         if (trangThai == null || (!trangThai.equals("LÀM") && !trangThai.equals("NGHỈ"))) {
             return ResponseEntity.badRequest().body("{\"error\": \"Trạng thái phải là LÀM hoặc NGHỈ\"}");
         }
-        if (trangThai.equals("LÀM") && caLamViecId == null) {
-            return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp caLamViecId khi trạng thái là LÀM\"}");
+        // UPDATED: Yêu cầu caLamViecId cho cả LÀM và NGHỈ
+        if (caLamViecId == null) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp caLamViecId\"}");
         }
         if (trangThai.equals("NGHỈ") && (maKyHieuChamCong == null || ghiChu == null)) {
             return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp maKyHieuChamCong và ghiChu khi trạng thái là NGHỈ\"}");
