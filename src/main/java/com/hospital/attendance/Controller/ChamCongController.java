@@ -124,4 +124,57 @@ public class ChamCongController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
         }
     }
+
+    @GetMapping("/trangthai-ngay")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    public ResponseEntity<?> kiemTraTrangThaiChamCongTrongNgay(
+            @RequestHeader("Authorization") String token,
+            @RequestParam(required = false) String nhanVienId,
+            @RequestParam(required = false) String nhanVienHoTen,
+            @RequestParam(required = false) String emailNhanVien) {
+
+        String tenDangNhap = jwtService.extractUsername(token.substring(7));
+
+        if (nhanVienId == null && nhanVienHoTen == null && emailNhanVien == null) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Thiếu thông tin nhân viên (nhanVienId, nhanVienHoTen, hoặc emailNhanVien)\"}");
+        }
+
+        try {
+            Map<String, Object> trangThai = chamCongService.kiemTraTrangThaiChamCongTrongNgay(
+                    tenDangNhap, nhanVienId, nhanVienHoTen, emailNhanVien);
+            return ResponseEntity.ok(trangThai);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
+        }
+    }
+
+    /**
+     * Endpoint để lấy chi tiết chấm công của nhân viên trong ngày hôm nay
+     */
+    @GetMapping("/chitiet-homnay")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    public ResponseEntity<?> layChiTietChamCongHomNay(
+            @RequestHeader("Authorization") String token,
+            @RequestParam(required = false) String nhanVienId,
+            @RequestParam(required = false) String nhanVienHoTen,
+            @RequestParam(required = false) String emailNhanVien) {
+
+        String tenDangNhap = jwtService.extractUsername(token.substring(7));
+
+        if (nhanVienId == null && nhanVienHoTen == null && emailNhanVien == null) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Thiếu thông tin nhân viên (nhanVienId, nhanVienHoTen, hoặc emailNhanVien)\"}");
+        }
+
+        try {
+            List<ChamCong> chiTiet = chamCongService.layChiTietChamCongHomNay(
+                    tenDangNhap, nhanVienId, nhanVienHoTen, emailNhanVien);
+            return ResponseEntity.ok(chiTiet);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
+        }
+    }
 }

@@ -16,7 +16,31 @@ public interface ChamCongRepository extends JpaRepository<ChamCong, Long> {
     List<ChamCong> findByNhanVienId(Long id);
     Optional<ChamCong> findByNhanVienAndThoiGianCheckInBetween(NhanVien nhanVien, Date start, Date end);
 
+    // Kiểm tra trùng lặp ca làm việc cụ thể trong ngày
+    @Query("SELECT c FROM ChamCong c WHERE c.nhanVien = :nhanVien AND c.caLamViec.id = :caLamViecId " +
+            "AND c.thoiGianCheckIn BETWEEN :start AND :end")
+    Optional<ChamCong> findByNhanVienAndCaLamViecAndThoiGianCheckInBetween(
+            @Param("nhanVien") NhanVien nhanVien,
+            @Param("caLamViecId") Long caLamViecId,
+            @Param("start") Date start,
+            @Param("end") Date end);
 
+    // THÊM MỚI: Đếm tổng số lần chấm công của nhân viên trong ngày
+    @Query("SELECT COUNT(c) FROM ChamCong c WHERE c.nhanVien = :nhanVien " +
+            "AND c.thoiGianCheckIn BETWEEN :start AND :end")
+    Long countByNhanVienAndThoiGianCheckInBetween(
+            @Param("nhanVien") NhanVien nhanVien,
+            @Param("start") Date start,
+            @Param("end") Date end);
+
+    // THÊM MỚI: Lấy danh sách chấm công của nhân viên trong ngày (để kiểm tra chi tiết)
+    @Query("SELECT c FROM ChamCong c WHERE c.nhanVien = :nhanVien " +
+            "AND c.thoiGianCheckIn BETWEEN :start AND :end " +
+            "ORDER BY c.thoiGianCheckIn ASC")
+    List<ChamCong> findByNhanVienAndDateRange(
+            @Param("nhanVien") NhanVien nhanVien,
+            @Param("start") Date start,
+            @Param("end") Date end);
 
     @Query("SELECT c FROM ChamCong c WHERE (:khoaPhongId IS NULL OR c.nhanVien.khoaPhong.id = :khoaPhongId) " +
             "AND c.nhanVien.trangThai = 1 " +
