@@ -79,6 +79,24 @@ public class NhanVienService {
             throw new IllegalStateException("Email '" + nhanVien.getEmail() + "' đã tồn tại");
         }
 
+        // Kiểm tra mã NV trùng lặp
+        if (nhanVien.getMaNV() != null && !nhanVien.getMaNV().trim().isEmpty()) {
+            Optional<NhanVien> existingByMaNV = nhanVienRepository.findByMaNVAndTrangThai(nhanVien.getMaNV().trim(), 1);
+            if (existingByMaNV.isPresent()) {
+                throw new IllegalStateException("Mã nhân viên '" + nhanVien.getMaNV() + "' đã tồn tại");
+            }
+            nhanVien.setMaNV(nhanVien.getMaNV().trim()); // Trim whitespace
+        }
+
+        // THÊM MỚI: Kiểm tra số điện thoại trùng lặp
+        if (nhanVien.getSoDienThoai() != null && !nhanVien.getSoDienThoai().trim().isEmpty()) {
+            Optional<NhanVien> existingBySDT = nhanVienRepository.findBySoDienThoaiAndTrangThai(nhanVien.getSoDienThoai().trim(), 1);
+            if (existingBySDT.isPresent()) {
+                throw new IllegalStateException("Số điện thoại '" + nhanVien.getSoDienThoai() + "' đã tồn tại");
+            }
+            nhanVien.setSoDienThoai(nhanVien.getSoDienThoai().trim()); // Trim whitespace
+        }
+
         // Gán khoa/phòng và trạng thái
         nhanVien.setKhoaPhong(khoaPhongRepository.findById(khoaPhongId).get());
         nhanVien.setTrangThai(1); // Nhân viên mới luôn hoạt động
@@ -133,11 +151,37 @@ public class NhanVienService {
             }
         }
 
+        // Kiểm tra mã NV trùng lặp nếu thay đổi
+        if (nhanVienDetails.getMaNV() != null && !nhanVienDetails.getMaNV().trim().isEmpty()) {
+            String newMaNV = nhanVienDetails.getMaNV().trim();
+            if (nhanVien.getMaNV() == null || !nhanVien.getMaNV().equals(newMaNV)) {
+                Optional<NhanVien> existingByMaNV = nhanVienRepository.findByMaNVAndTrangThai(newMaNV, 1);
+                if (existingByMaNV.isPresent()) {
+                    throw new IllegalStateException("Mã nhân viên '" + newMaNV + "' đã tồn tại");
+                }
+            }
+            nhanVien.setMaNV(newMaNV);
+        } else {
+            nhanVien.setMaNV(null); // Cho phép để trống
+        }
+
+        // THÊM MỚI: Kiểm tra số điện thoại trùng lặp nếu thay đổi
+        if (nhanVienDetails.getSoDienThoai() != null && !nhanVienDetails.getSoDienThoai().trim().isEmpty()) {
+            String newSDT = nhanVienDetails.getSoDienThoai().trim();
+            if (nhanVien.getSoDienThoai() == null || !nhanVien.getSoDienThoai().equals(newSDT)) {
+                Optional<NhanVien> existingBySDT = nhanVienRepository.findBySoDienThoaiAndTrangThai(newSDT, 1);
+                if (existingBySDT.isPresent()) {
+                    throw new IllegalStateException("Số điện thoại '" + newSDT + "' đã tồn tại");
+                }
+            }
+            nhanVien.setSoDienThoai(newSDT);
+        } else {
+            nhanVien.setSoDienThoai(null); // Cho phép để trống
+        }
+
         nhanVien.setHoTen(nhanVienDetails.getHoTen());
         nhanVien.setEmail(nhanVienDetails.getEmail());
-        nhanVien.setMaNV(nhanVienDetails.getMaNV());
         nhanVien.setNgayThangNamSinh(nhanVienDetails.getNgayThangNamSinh());
-        nhanVien.setSoDienThoai(nhanVienDetails.getSoDienThoai());
         nhanVien.setKhoaPhong(khoaPhongRepository.findById(khoaPhongId).get());
         logger.info("Updating NhanVien in database");
         return nhanVienRepository.save(nhanVien);

@@ -16,6 +16,7 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, Long> {
     Optional<NhanVien> findByEmailAndTrangThai(String email, Integer trangThai);
     Optional<NhanVien> findByHoTenAndTrangThai(String hoTen, Integer trangThai);
     Optional<NhanVien> findByMaNVAndTrangThai(String maNV, Integer trangThai);
+    Optional<NhanVien> findBySoDienThoaiAndTrangThai(String soDienThoai, Integer trangThai); // THÊM MỚI
     List<NhanVien> findByKhoaPhongIdAndTrangThai(Long khoaPhongId, Integer trangThai);
 
     @Query("SELECT n FROM NhanVien n WHERE (:khoaPhongId IS NULL OR n.khoaPhong.id = :khoaPhongId) AND n.trangThai = :trangThai")
