@@ -50,8 +50,9 @@ public class ChamCongController {
         if (caLamViecId == null) {
             return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp caLamViecId\"}");
         }
-        if (trangThai.equals("NGHỈ") && (maKyHieuChamCong == null || ghiChu == null)) {
-            return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp maKyHieuChamCong và ghiChu khi trạng thái là NGHỈ\"}");
+        // UPDATED: Chỉ yêu cầu maKyHieuChamCong khi trạng thái là NGHỈ, ghiChu có thể null
+        if (trangThai.equals("NGHỈ") && maKyHieuChamCong == null) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp maKyHieuChamCong khi trạng thái là NGHỈ\"}");
         }
 
         try {
@@ -83,8 +84,9 @@ public class ChamCongController {
         if (caLamViecId == null) {
             return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp caLamViecId\"}");
         }
-        if (trangThai.equals("NGHỈ") && (maKyHieuChamCong == null || ghiChu == null)) {
-            return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp maKyHieuChamCong và ghiChu khi trạng thái là NGHỈ\"}");
+        // UPDATED: Chỉ yêu cầu maKyHieuChamCong khi trạng thái là NGHỈ, ghiChu có thể null
+        if (trangThai.equals("NGHỈ") && maKyHieuChamCong == null) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp maKyHieuChamCong khi trạng thái là NGHỈ\"}");
         }
 
         try {

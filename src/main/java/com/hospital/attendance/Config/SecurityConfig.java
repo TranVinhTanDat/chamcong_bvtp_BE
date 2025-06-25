@@ -62,6 +62,10 @@ public class SecurityConfig {
                         .requestMatchers("/loai-nghi").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
                         .requestMatchers("/nhanvien/**").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
                         .requestMatchers("/khoa-phong").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+                        .requestMatchers("/user/current").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+                        .requestMatchers("/user/current/password").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+
+
                         .requestMatchers("/user/**").hasRole("ADMIN")
 
                         // API ADMIN Chấm công

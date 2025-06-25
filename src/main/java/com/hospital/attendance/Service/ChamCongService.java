@@ -240,8 +240,9 @@ public class ChamCongService {
     }
 
     private void xetThongTinChoTrangThaiNghi(ChamCong chamCong, String caLamViecId, String maKyHieuChamCong, String ghiChu, NhanVien nhanVien) {
-        if (maKyHieuChamCong == null || ghiChu == null) {
-            throw new IllegalStateException("Phải cung cấp maKyHieuChamCong và ghiChu khi trạng thái là NGHỈ");
+        // UPDATED: Chỉ yêu cầu maKyHieuChamCong, ghiChu có thể null
+        if (maKyHieuChamCong == null) {
+            throw new IllegalStateException("Phải cung cấp maKyHieuChamCong khi trạng thái là NGHỈ");
         }
 
         // Bắt buộc phải có caLamViecId cho trạng thái NGHỈ
@@ -256,7 +257,9 @@ public class ChamCongService {
             throw new IllegalStateException("Ký hiệu chấm công '" + maKyHieuChamCong + "' không được sử dụng");
         }
         chamCong.setKyHieuChamCong(kyHieuChamCong);
-        chamCong.setGhiChu(ghiChu);
+
+        // UPDATED: ghiChu có thể null, không cần kiểm tra
+        chamCong.setGhiChu(ghiChu); // Cho phép null
 
         // Set ca làm việc bắt buộc từ payload
         try {
