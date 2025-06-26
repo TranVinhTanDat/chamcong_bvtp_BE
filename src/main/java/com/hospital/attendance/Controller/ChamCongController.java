@@ -181,4 +181,56 @@ public class ChamCongController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
         }
     }
+
+    @PostMapping("/checkin-bulk")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    public ResponseEntity<?> checkInBulk(
+            @RequestHeader("Authorization") String token,
+            @RequestBody Map<String, Object> request) {
+
+        String tenDangNhap = jwtService.extractUsername(token.substring(7));
+
+        // Parse parameters
+        Long khoaPhongId = request.get("khoaPhongId") != null ?
+                Long.parseLong(request.get("khoaPhongId").toString()) : null;
+        String trangThai = (String) request.get("trangThai");
+        Integer shift = request.get("shift") != null ?
+                Integer.parseInt(request.get("shift").toString()) : null;
+        String caLamViecId = (String) request.get("caLamViecId");
+        String maKyHieuChamCong = (String) request.get("maKyHieuChamCong");
+        String ghiChu = (String) request.get("ghiChu");
+        String filterDate = (String) request.get("filterDate");
+
+        // Validation
+        if (khoaPhongId == null) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Phải chọn khoa phòng\"}");
+        }
+        if (trangThai == null || (!trangThai.equals("LÀM") && !trangThai.equals("NGHỈ"))) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Trạng thái phải là LÀM hoặc NGHỈ\"}");
+        }
+        if (shift == null || (shift != 1 && shift != 2)) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Ca phải là 1 (sáng) hoặc 2 (chiều)\"}");
+        }
+        if (caLamViecId == null) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp caLamViecId\"}");
+        }
+        if (trangThai.equals("NGHỈ") && maKyHieuChamCong == null) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp maKyHieuChamCong khi trạng thái là NGHỈ\"}");
+        }
+
+        try {
+            Map<String, Object> result = chamCongService.checkInBulk(
+                    tenDangNhap, khoaPhongId, trangThai, shift, caLamViecId,
+                    maKyHieuChamCong, ghiChu, filterDate
+            );
+            return ResponseEntity.ok(result);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
+        }
+    }
 }

@@ -34,6 +34,9 @@ public class ChamCongService {
     @Autowired
     private KyHieuChamCongRepository kyHieuChamCongRepository;
 
+    @Autowired
+    private KhoaPhongRepository khoaPhongRepository;
+
     /**
      * UPDATED: Loại bỏ kiểm tra trùng ca làm việc - Cho phép chấm công cùng ca nhiều lần
      */
@@ -383,5 +386,100 @@ public class ChamCongService {
         java.sql.Date endOfDay = new java.sql.Date(dateRange[1].getTime());
 
         return chamCongRepository.findByNhanVienAndDateRange(nhanVien, startOfDay, endOfDay);
+    }
+
+
+    public Map<String, Object> checkInBulk(String tenDangNhapChamCong, Long khoaPhongId,
+                                           String trangThai, Integer shift, String caLamViecId,
+                                           String maKyHieuChamCong, String ghiChu, String filterDate) {
+
+        // 1. Kiểm tra quyền người chấm công
+        User chamCongUser = userRepository.findByTenDangNhap(tenDangNhapChamCong)
+                .orElseThrow(() -> new SecurityException("Người chấm công không tồn tại"));
+
+        String vaiTroChamCong = chamCongUser.getRole().getTenVaiTro();
+        if (!vaiTroChamCong.equals("ADMIN") && !vaiTroChamCong.equals("NGUOICHAMCONG") && !vaiTroChamCong.equals("NGUOITONGHOP")) {
+            throw new SecurityException("Bạn không có quyền chấm công");
+        }
+
+        // 2. Kiểm tra quyền truy cập khoa phòng
+        if ((vaiTroChamCong.equals("NGUOICHAMCONG") || vaiTroChamCong.equals("NGUOITONGHOP")) &&
+                !chamCongUser.getKhoaPhong().getId().equals(khoaPhongId)) {
+            throw new SecurityException("Chỉ được chấm công cho nhân viên cùng khoa/phòng");
+        }
+
+        // 3. Kiểm tra khoa phòng tồn tại
+        if (!khoaPhongRepository.existsById(khoaPhongId)) {
+            throw new IllegalStateException("Khoa phòng không tồn tại");
+        }
+
+        // 4. Lấy danh sách nhân viên trong khoa phòng (chỉ những người đang hoạt động)
+        List<NhanVien> danhSachNhanVien = nhanVienRepository.findByKhoaPhongIdAndTrangThai(khoaPhongId, 1);
+
+        if (danhSachNhanVien.isEmpty()) {
+            throw new IllegalStateException("Không có nhân viên nào trong khoa phòng này");
+        }
+
+        // 5. Tạo khoảng thời gian dựa trên filterDate hoặc ngày hiện tại
+        Date[] dateRange = getDateRange(filterDate);
+        java.sql.Date startOfDay = new java.sql.Date(dateRange[0].getTime());
+        java.sql.Date endOfDay = new java.sql.Date(dateRange[1].getTime());
+
+        // 6. Xử lý chấm công cho từng nhân viên
+        List<String> thanhCong = new ArrayList<>();
+        List<String> thatBai = new ArrayList<>();
+
+        for (NhanVien nhanVien : danhSachNhanVien) {
+            try {
+                // Kiểm tra đã chấm công tối đa 2 lần trong ngày chưa
+                Long soLanChamCongTrongNgay = chamCongRepository.countByNhanVienAndThoiGianCheckInBetween(
+                        nhanVien, startOfDay, endOfDay);
+
+                if (soLanChamCongTrongNgay >= 2) {
+                    thatBai.add(nhanVien.getHoTen() + " - Đã chấm công đủ 2 lần trong ngày");
+                    continue;
+                }
+
+                // Kiểm tra xem shift này đã được chấm công chưa bằng cách đếm số lần chấm công
+                List<ChamCong> danhSachChamCongTrongNgay = chamCongRepository.findByNhanVienAndDateRange(
+                        nhanVien, startOfDay, endOfDay);
+
+                // Nếu shift = 1 và đã có bản ghi nào, hoặc shift = 2 và đã có >= 2 bản ghi thì skip
+                if ((shift == 1 && !danhSachChamCongTrongNgay.isEmpty()) ||
+                        (shift == 2 && danhSachChamCongTrongNgay.size() >= 2)) {
+                    thatBai.add(nhanVien.getHoTen() + " - Đã chấm công cho ca " + (shift == 1 ? "sáng" : "chiều"));
+                    continue;
+                }
+
+                // Nếu shift = 2 nhưng chưa có shift 1, bắt buộc phải chấm shift 1 trước
+                if (shift == 2 && danhSachChamCongTrongNgay.isEmpty()) {
+                    thatBai.add(nhanVien.getHoTen() + " - Phải chấm công ca sáng trước khi chấm ca chiều");
+                    continue;
+                }
+
+                // Tạo bản ghi chấm công
+                ChamCong chamCong = taoMoiBanGhiChamCong(nhanVien, trangThai, caLamViecId,
+                        maKyHieuChamCong, ghiChu, filterDate);
+
+                thanhCong.add(nhanVien.getHoTen() + " - " + trangThai + " ca " + (shift == 1 ? "sáng" : "chiều"));
+
+            } catch (Exception e) {
+                thatBai.add(nhanVien.getHoTen() + " - Lỗi: " + e.getMessage());
+            }
+        }
+
+        // 7. Tạo kết quả trả về
+        Map<String, Object> result = new HashMap<>();
+        result.put("tongSoNhanVien", danhSachNhanVien.size());
+        result.put("soLuongThanhCong", thanhCong.size());
+        result.put("soLuongThatBai", thatBai.size());
+        result.put("chiTietThanhCong", thanhCong);
+        result.put("chiTietThatBai", thatBai);
+
+        String thongBaoTongKet = String.format("Chấm công hàng loạt hoàn tất: %d/%d thành công",
+                thanhCong.size(), danhSachNhanVien.size());
+        result.put("message", thongBaoTongKet);
+
+        return result;
     }
 }
