@@ -63,21 +63,27 @@ public class NhanVienController {
             @RequestHeader("Authorization") String token,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) Long khoaPhongId) {
-        logger.info("GET /nhanvien request received");
+            @RequestParam(required = false) Long khoaPhongId,
+            @RequestParam(required = false) String search) { // THÊM MỚI
+        logger.info("GET /nhanvien request received with search: {}", search);
         String tenDangNhap = jwtService.extractUsername(token.substring(7));
         Long userKhoaPhongId = jwtService.extractKhoaPhongId(token.substring(7));
         String role = jwtService.extractRole(token.substring(7));
-        logger.info("User: {}, Role: {}, KhoaPhongId: {}", tenDangNhap, role, khoaPhongId);
+        logger.info("User: {}, Role: {}, KhoaPhongId: {}, Search: {}", tenDangNhap, role, khoaPhongId, search);
+
         Long finalKhoaPhongId = khoaPhongId;
         if (role.equals("NGUOICHAMCONG")) {
             finalKhoaPhongId = userKhoaPhongId;
         } else if (role.equals("ADMIN") && khoaPhongId == null) {
             finalKhoaPhongId = null;
         }
-        Page<NhanVien> nhanViens = nhanVienService.getAllNhanVien(tenDangNhap, page, size, finalKhoaPhongId);
+
+        // SỬ DỤNG method mới có search
+        Page<NhanVien> nhanViens = nhanVienService.searchNhanVien(tenDangNhap, page, size, finalKhoaPhongId, search);
         return ResponseEntity.ok(nhanViens);
     }
+
+
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")

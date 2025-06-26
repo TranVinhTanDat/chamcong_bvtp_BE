@@ -237,4 +237,33 @@ public class NhanVienService {
         }
         return nhanVienRepository.findByKhoaPhongIdAndTrangThai(khoaPhongId, 1);
     }
+
+    // THÊM method này vào NhanVienService.java:
+
+    public Page<NhanVien> searchNhanVien(String tenDangNhap, int page, int size, Long khoaPhongId, String search) {
+        User user = userRepository.findByTenDangNhap(tenDangNhap)
+                .orElseThrow(() -> new SecurityException("Người dùng không tồn tại"));
+        Long finalKhoaPhongId = khoaPhongId;
+
+        logger.info("Searching NhanVien for User: {}, Role: {}, KhoaPhongId: {}, Search: {}",
+                tenDangNhap, user.getRole().getTenVaiTro(), finalKhoaPhongId, search);
+
+        // Kiểm tra quyền truy cập
+        if (user.getRole().getTenVaiTro().equals("NGUOICHAMCONG")) {
+            finalKhoaPhongId = user.getKhoaPhong().getId();
+        } else if (user.getRole().getTenVaiTro().equals("ADMIN") && khoaPhongId == null) {
+            finalKhoaPhongId = null;
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        // Nếu không có search keyword, dùng method cũ
+        if (search == null || search.trim().isEmpty()) {
+            return nhanVienRepository.findByKhoaPhongIdAndTrangThai(finalKhoaPhongId, 1, pageable);
+        }
+
+        // Có search keyword, dùng method mới
+        return nhanVienRepository.findBySearchAndKhoaPhongIdAndTrangThai(
+                search.trim(), finalKhoaPhongId, 1, pageable);
+    }
 }
