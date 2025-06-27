@@ -563,4 +563,151 @@ public class ChamCongService {
 
         return result;
     }
+
+
+    public ChamCong updateAttendanceSymbol(String tenDangNhap, Long nhanVienId,
+                                           Integer day, Integer shift, Integer month,
+                                           Integer year, String newSymbol) {
+
+        // 1. Kiểm tra quyền ADMIN
+        User user = userRepository.findByTenDangNhap(tenDangNhap)
+                .orElseThrow(() -> new SecurityException("Người dùng không tồn tại"));
+
+        if (!"ADMIN".equals(user.getRole().getTenVaiTro())) {
+            throw new SecurityException("Chỉ ADMIN mới có quyền sửa ký hiệu chấm công");
+        }
+
+        // 2. Kiểm tra nhân viên tồn tại
+        NhanVien nhanVien = nhanVienRepository.findByIdAndTrangThai(nhanVienId, 1)
+                .orElseThrow(() -> new IllegalStateException("Nhân viên không tồn tại hoặc đã bị vô hiệu hóa"));
+
+        // 3. Tạo khoảng thời gian cho ngày cụ thể
+        Calendar cal = Calendar.getInstance();
+        cal.set(year, month - 1, day, 0, 0, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date startOfDay = cal.getTime();
+
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE, 59);
+        cal.set(Calendar.SECOND, 59);
+        cal.set(Calendar.MILLISECOND, 999);
+        Date endOfDay = cal.getTime();
+
+        java.sql.Date sqlStartOfDay = new java.sql.Date(startOfDay.getTime());
+        java.sql.Date sqlEndOfDay = new java.sql.Date(endOfDay.getTime());
+
+        // 4. Lấy tất cả bản ghi chấm công trong ngày và sắp xếp theo thời gian
+        List<ChamCong> existingRecords = chamCongRepository.findByNhanVienAndDateRange(
+                nhanVien, sqlStartOfDay, sqlEndOfDay);
+
+        // Sắp xếp theo thời gian check-in
+        existingRecords.sort((a, b) -> {
+            Date timeA = a.getThoiGianCheckIn();
+            Date timeB = b.getThoiGianCheckIn();
+            return timeA.compareTo(timeB);
+        });
+
+        ChamCong targetRecord = null;
+
+        // 5. Xác định bản ghi cần cập nhật theo shift
+        if (shift == 1 && existingRecords.size() >= 1) {
+            targetRecord = existingRecords.get(0); // Ca sáng - bản ghi đầu tiên
+        } else if (shift == 2 && existingRecords.size() >= 2) {
+            targetRecord = existingRecords.get(1); // Ca chiều - bản ghi thứ hai
+        }
+
+        // 6. Xử lý theo ký hiệu mới
+        if ("-".equals(newSymbol)) {
+            // Xóa bản ghi nếu ký hiệu là "-"
+            if (targetRecord != null) {
+                chamCongRepository.delete(targetRecord);
+                return null; // Trả về null để biết đã xóa
+            }
+            return null;
+        } else {
+            // Cập nhật hoặc tạo mới bản ghi
+            if (targetRecord == null) {
+                // Tạo mới nếu chưa có bản ghi
+                targetRecord = new ChamCong();
+                targetRecord.setNhanVien(nhanVien);
+
+                // Set thời gian check-in dựa trên shift
+                Calendar checkInCal = Calendar.getInstance();
+                checkInCal.set(year, month - 1, day);
+
+                if (shift == 1) {
+                    checkInCal.set(Calendar.HOUR_OF_DAY, 7); // 7:00 AM cho ca sáng
+                    checkInCal.set(Calendar.MINUTE, 0);
+                } else {
+                    checkInCal.set(Calendar.HOUR_OF_DAY, 13); // 1:00 PM cho ca chiều
+                    checkInCal.set(Calendar.MINUTE, 0);
+                }
+
+                targetRecord.setThoiGianCheckIn(checkInCal.getTime());
+            }
+
+            // Cập nhật ký hiệu và trạng thái
+            return updateRecordWithNewSymbol(targetRecord, newSymbol);
+        }
+    }
+
+    private ChamCong updateRecordWithNewSymbol(ChamCong record, String newSymbol) {
+        // Tìm ký hiệu chấm công
+        Optional<KyHieuChamCong> kyHieuOpt = kyHieuChamCongRepository.findByMaKyHieu(newSymbol);
+
+        if (kyHieuOpt.isEmpty()) {
+            throw new IllegalStateException("Ký hiệu chấm công '" + newSymbol + "' không tồn tại");
+        }
+
+        KyHieuChamCong kyHieu = kyHieuOpt.get();
+
+        if (!kyHieu.isTrangThai()) {
+            throw new IllegalStateException("Ký hiệu chấm công '" + newSymbol + "' không được sử dụng");
+        }
+
+        record.setKyHieuChamCong(kyHieu);
+
+        // Xác định trạng thái và ca làm việc dựa trên ký hiệu
+        if (isWorkSymbol(newSymbol)) {
+            // Trạng thái LÀM
+            TrangThaiChamCong trangThaiLam = trangThaiChamCongRepository.findByTenTrangThai("LÀM")
+                    .orElseThrow(() -> new IllegalStateException("Trạng thái LÀM không tồn tại"));
+            record.setTrangThaiChamCong(trangThaiLam);
+
+            // Tìm ca làm việc có ký hiệu này
+            Optional<CaLamViec> caLamViecOpt = caLamViecRepository.findByKyHieuChamCong(kyHieu);
+            if (caLamViecOpt.isPresent()) {
+                record.setCaLamViec(caLamViecOpt.get());
+            } else {
+                // Nếu không tìm thấy ca cụ thể, dùng ca mặc định
+                List<CaLamViec> allCa = caLamViecRepository.findAll();
+                if (!allCa.isEmpty()) {
+                    record.setCaLamViec(allCa.get(0)); // Ca đầu tiên làm mặc định
+                }
+            }
+
+            record.setGhiChu(null);
+        } else {
+            // Trạng thái NGHỈ
+            TrangThaiChamCong trangThaiNghi = trangThaiChamCongRepository.findByTenTrangThai("NGHỈ")
+                    .orElseThrow(() -> new IllegalStateException("Trạng thái NGHỈ không tồn tại"));
+            record.setTrangThaiChamCong(trangThaiNghi);
+
+            // Đặt ca làm việc mặc định cho nghỉ
+            List<CaLamViec> allCa = caLamViecRepository.findAll();
+            if (!allCa.isEmpty()) {
+                record.setCaLamViec(allCa.get(0));
+            }
+
+            record.setGhiChu("Cập nhật từ bảng chấm công");
+        }
+
+        return chamCongRepository.save(record);
+    }
+
+    private boolean isWorkSymbol(String symbol) {
+        // Các ký hiệu làm việc
+        return Arrays.asList("X", "VT", "RT", "S", "C", "T", "T12", "T16", "CT").contains(symbol);
+    }
+
 }

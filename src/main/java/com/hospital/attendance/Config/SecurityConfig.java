@@ -68,6 +68,7 @@ public class SecurityConfig {
                         // Chấm công nâng cao - Chỉ ADMIN
                         .requestMatchers("/chamcong/{id}/trangthai").hasRole("ADMIN")
                         .requestMatchers("/chamcong/update-bulk").hasRole("ADMIN")
+                        .requestMatchers("/chamcong/update-symbol").hasRole("ADMIN")
 
                         // Tổng hợp - Chỉ NGUOITONGHOP
                         .requestMatchers("/chamcong/tonghopa/**").hasRole("NGUOITONGHOP")

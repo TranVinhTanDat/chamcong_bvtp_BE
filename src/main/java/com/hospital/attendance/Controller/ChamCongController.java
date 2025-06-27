@@ -286,4 +286,55 @@ public class ChamCongController {
                     .body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
         }
     }
+
+    @PutMapping("/update-symbol")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateAttendanceSymbol(
+            @RequestHeader("Authorization") String token,
+            @RequestBody Map<String, Object> request) {
+
+        try {
+            Long nhanVienId = Long.parseLong(request.get("nhanVienId").toString());
+            Integer day = Integer.parseInt(request.get("day").toString());
+            Integer shift = Integer.parseInt(request.get("shift").toString());
+            Integer month = Integer.parseInt(request.get("month").toString());
+            Integer year = Integer.parseInt(request.get("year").toString());
+            String newSymbol = (String) request.get("newSymbol");
+
+            if (shift != 1 && shift != 2) {
+                return ResponseEntity.badRequest()
+                        .body("{\"error\": \"Ca phải là 1 (sáng) hoặc 2 (chiều)\"}");
+            }
+
+            if (day < 1 || day > 31) {
+                return ResponseEntity.badRequest()
+                        .body("{\"error\": \"Ngày không hợp lệ\"}");
+            }
+
+            if (month < 1 || month > 12) {
+                return ResponseEntity.badRequest()
+                        .body("{\"error\": \"Tháng không hợp lệ\"}");
+            }
+
+            String tenDangNhap = jwtService.extractUsername(token.substring(7));
+
+            ChamCong updatedRecord = chamCongService.updateAttendanceSymbol(
+                    tenDangNhap, nhanVienId, day, shift, month, year, newSymbol);
+
+            return ResponseEntity.ok(updatedRecord);
+
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest()
+                    .body("{\"error\": \"Dữ liệu đầu vào không hợp lệ\"}");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest()
+                    .body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
+        }
+    }
 }
