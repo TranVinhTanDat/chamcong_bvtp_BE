@@ -53,36 +53,61 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // ========== PUBLIC ENDPOINTS ==========
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // ========== CHẤM CÔNG APIs ==========
+                        // Chấm công cơ bản - Tất cả roles
                         .requestMatchers("/chamcong/checkin").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
-                        .requestMatchers("/chamcong/{id}/trangthai").hasRole("ADMIN")
-                        .requestMatchers("/chamcong/tonghopa/**").hasRole("NGUOITONGHOP")
+                        .requestMatchers("/chamcong/checkin-bulk").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
                         .requestMatchers("/chamcong/lichsu").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
-                        .requestMatchers("/loai-nghi").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
-                        .requestMatchers("/nhanvien/**").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
-                        .requestMatchers("/khoa-phong").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
-                        .requestMatchers("/user/current").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
-                        .requestMatchers("/user/current/password").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+                        .requestMatchers("/chamcong/trangthai-ngay").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+                        .requestMatchers("/chamcong/chitiet-homnay").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
 
+                        // Chấm công nâng cao - Chỉ ADMIN
+                        .requestMatchers("/chamcong/{id}/trangthai").hasRole("ADMIN")
+                        .requestMatchers("/chamcong/update-bulk").hasRole("ADMIN")
 
-                        .requestMatchers("/user/**").hasRole("ADMIN")
+                        // Tổng hợp - Chỉ NGUOITONGHOP
+                        .requestMatchers("/chamcong/tonghopa/**").hasRole("NGUOITONGHOP")
 
-                        // API ADMIN Chấm công
+                        // ========== KÝ HIỆU CHẤM CÔNG APIs ==========
+                        // Xem - Tất cả roles
+                        .requestMatchers(HttpMethod.GET, "/ky-hieu-cham-cong").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
                         .requestMatchers("/ky-hieu-cham-cong/paged").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
-                        .requestMatchers("/ky-hieu-cham-cong/{id}").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+                        .requestMatchers(HttpMethod.GET, "/ky-hieu-cham-cong/{id}").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+
+                        // Quản lý - Chỉ ADMIN
                         .requestMatchers(HttpMethod.POST, "/ky-hieu-cham-cong").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/ky-hieu-cham-cong/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/ky-hieu-cham-cong/{id}").hasRole("ADMIN")
 
-                        // API Ca làm việc
+                        // ========== CA LÀM VIỆC APIs ==========
+                        // Xem - Tất cả roles
+                        .requestMatchers(HttpMethod.GET, "/ca-lam-viec").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
                         .requestMatchers("/ca-lam-viec/paged").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
-                        .requestMatchers("/ca-lam-viec/{id}").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+                        .requestMatchers(HttpMethod.GET, "/ca-lam-viec/{id}").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+
+                        // Quản lý - Chỉ ADMIN
                         .requestMatchers(HttpMethod.POST, "/ca-lam-viec").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/ca-lam-viec/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/ca-lam-viec/{id}").hasRole("ADMIN")
 
+                        // ========== NHÂN VIÊN & KHOA PHÒNG APIs ==========
+                        .requestMatchers("/nhanvien/**").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+                        .requestMatchers("/khoa-phong").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+                        .requestMatchers("/loai-nghi").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
 
+                        // ========== USER MANAGEMENT APIs ==========
+                        // Profile cá nhân - Tất cả roles
+                        .requestMatchers("/user/current").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+                        .requestMatchers("/user/current/password").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+
+                        // Quản lý user - Chỉ ADMIN
+                        .requestMatchers("/user/**").hasRole("ADMIN")
+
+                        // ========== DEFAULT ==========
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

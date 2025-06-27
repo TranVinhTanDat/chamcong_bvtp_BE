@@ -482,4 +482,85 @@ public class ChamCongService {
 
         return result;
     }
+
+
+    public Map<String, Object> updateBulk(String tenDangNhapChamCong, Long khoaPhongId,
+                                          String trangThai, Integer shift, String caLamViecId,
+                                          String maKyHieuChamCong, String ghiChu, String filterDate) {
+
+        // 1. Kiểm tra quyền người chấm công (chỉ ADMIN)
+        User chamCongUser = userRepository.findByTenDangNhap(tenDangNhapChamCong)
+                .orElseThrow(() -> new SecurityException("Người chấm công không tồn tại"));
+
+        String vaiTroChamCong = chamCongUser.getRole().getTenVaiTro();
+        if (!vaiTroChamCong.equals("ADMIN")) {
+            throw new SecurityException("Chỉ ADMIN mới có quyền cập nhật hàng loạt");
+        }
+
+        // 2. Kiểm tra khoa phòng tồn tại
+        if (!khoaPhongRepository.existsById(khoaPhongId)) {
+            throw new IllegalStateException("Khoa phòng không tồn tại");
+        }
+
+        // 3. Lấy danh sách nhân viên trong khoa phòng (chỉ những người đang hoạt động)
+        List<NhanVien> danhSachNhanVien = nhanVienRepository.findByKhoaPhongIdAndTrangThai(khoaPhongId, 1);
+
+        if (danhSachNhanVien.isEmpty()) {
+            throw new IllegalStateException("Không có nhân viên nào trong khoa phòng này");
+        }
+
+        // 4. Tạo khoảng thời gian dựa trên filterDate
+        Date[] dateRange = getDateRange(filterDate);
+        java.sql.Date startOfDay = new java.sql.Date(dateRange[0].getTime());
+        java.sql.Date endOfDay = new java.sql.Date(dateRange[1].getTime());
+
+        // 5. Tìm và cập nhật các bản ghi chấm công
+        List<String> thanhCong = new ArrayList<>();
+        List<String> thatBai = new ArrayList<>();
+
+        for (NhanVien nhanVien : danhSachNhanVien) {
+            try {
+                // Tìm bản ghi chấm công theo shift
+                List<ChamCong> danhSachChamCongTrongNgay = chamCongRepository.findByNhanVienAndDateRange(
+                        nhanVien, startOfDay, endOfDay);
+
+                // Xác định bản ghi cần update theo shift
+                ChamCong chamCongCanUpdate = null;
+                if (shift == 1 && !danhSachChamCongTrongNgay.isEmpty()) {
+                    chamCongCanUpdate = danhSachChamCongTrongNgay.get(0); // Bản ghi đầu tiên (ca sáng)
+                } else if (shift == 2 && danhSachChamCongTrongNgay.size() >= 2) {
+                    chamCongCanUpdate = danhSachChamCongTrongNgay.get(1); // Bản ghi thứ hai (ca chiều)
+                }
+
+                if (chamCongCanUpdate == null) {
+                    thatBai.add(nhanVien.getHoTen() + " - Không tìm thấy bản ghi chấm công cho ca " +
+                            (shift == 1 ? "sáng" : "chiều"));
+                    continue;
+                }
+
+                // Cập nhật bản ghi
+                capNhatBanGhiChamCong(chamCongCanUpdate, trangThai, caLamViecId, maKyHieuChamCong, ghiChu);
+
+                thanhCong.add(nhanVien.getHoTen() + " - Cập nhật thành " + trangThai + " ca " +
+                        (shift == 1 ? "sáng" : "chiều"));
+
+            } catch (Exception e) {
+                thatBai.add(nhanVien.getHoTen() + " - Lỗi: " + e.getMessage());
+            }
+        }
+
+        // 6. Tạo kết quả trả về
+        Map<String, Object> result = new HashMap<>();
+        result.put("tongSoNhanVien", danhSachNhanVien.size());
+        result.put("soLuongThanhCong", thanhCong.size());
+        result.put("soLuongThatBai", thatBai.size());
+        result.put("chiTietThanhCong", thanhCong);
+        result.put("chiTietThatBai", thatBai);
+
+        String thongBaoTongKet = String.format("Cập nhật hàng loạt hoàn tất: %d/%d thành công",
+                thanhCong.size(), danhSachNhanVien.size());
+        result.put("message", thongBaoTongKet);
+
+        return result;
+    }
 }
