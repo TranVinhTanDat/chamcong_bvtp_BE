@@ -29,8 +29,9 @@ public class NhanVienController {
     @Autowired
     private JwtService jwtService;
 
+    // *** CẬP NHẬT: Thêm NGUOITONGHOP_1KP và cải thiện logic phân quyền ***
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP', 'NGUOITONGHOP_1KP')")
     public ResponseEntity<?> createNhanVien(@RequestHeader("Authorization") String token, @Valid @RequestBody NhanVien nhanVien, BindingResult bindingResult) {
         logger.info("POST /nhanvien request received");
         if (bindingResult.hasErrors()) {
@@ -57,36 +58,71 @@ public class NhanVienController {
         }
     }
 
+    // *** CẬP NHẬT: Logic phân quyền rõ ràng hơn ***
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP', 'NGUOITONGHOP_1KP')")
     public ResponseEntity<Page<NhanVien>> getAllNhanVien(
             @RequestHeader("Authorization") String token,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) Long khoaPhongId,
-            @RequestParam(required = false) String search) { // THÊM MỚI
+            @RequestParam(required = false) String search) {
+
         logger.info("GET /nhanvien request received with search: {}", search);
         String tenDangNhap = jwtService.extractUsername(token.substring(7));
         Long userKhoaPhongId = jwtService.extractKhoaPhongId(token.substring(7));
         String role = jwtService.extractRole(token.substring(7));
-        logger.info("User: {}, Role: {}, KhoaPhongId: {}, Search: {}", tenDangNhap, role, khoaPhongId, search);
 
-        Long finalKhoaPhongId = khoaPhongId;
-        if (role.equals("NGUOICHAMCONG")) {
-            finalKhoaPhongId = userKhoaPhongId;
-        } else if (role.equals("ADMIN") && khoaPhongId == null) {
-            finalKhoaPhongId = null;
+        logger.info("User: {}, Role: {}, RequestedKhoaPhongId: {}, UserKhoaPhongId: {}, Search: {}",
+                tenDangNhap, role, khoaPhongId, userKhoaPhongId, search);
+
+        // *** LOGIC PHÂN QUYỀN ĐƯỢC CẢI THIỆN ***
+        Long finalKhoaPhongId = null;
+
+        switch (role) {
+            case "ADMIN":
+                // ADMIN: Có thể xem tất cả hoặc filter theo khoa phòng cụ thể
+                finalKhoaPhongId = khoaPhongId; // null = tất cả, có giá trị = filter
+                logger.info("ADMIN access: viewing {} employees",
+                        khoaPhongId == null ? "ALL" : "khoaPhongId=" + khoaPhongId);
+                break;
+
+            case "NGUOITONGHOP":
+                // NGUOITONGHOP: Có thể xem tất cả hoặc filter (tương tự ADMIN)
+                finalKhoaPhongId = khoaPhongId; // null = tất cả, có giá trị = filter
+                logger.info("NGUOITONGHOP access: viewing {} employees",
+                        khoaPhongId == null ? "ALL" : "khoaPhongId=" + khoaPhongId);
+                break;
+
+            case "NGUOITONGHOP_1KP":
+            case "NGUOICHAMCONG":
+                // Các role này chỉ được xem khoa phòng của mình, BỎ QUA tham số khoaPhongId
+                finalKhoaPhongId = userKhoaPhongId;
+                logger.info("{} access: restricted to userKhoaPhongId={}", role, userKhoaPhongId);
+
+                // *** SECURITY CHECK: Cảnh báo nếu có người cố gắng truy cập khoa phòng khác ***
+                if (khoaPhongId != null && !khoaPhongId.equals(userKhoaPhongId)) {
+                    logger.warn("SECURITY ALERT: User {} (role: {}) attempted to access khoaPhongId={} but restricted to userKhoaPhongId={}",
+                            tenDangNhap, role, khoaPhongId, userKhoaPhongId);
+                }
+                break;
+
+            default:
+                logger.error("Unknown role: {}", role);
+                return ResponseEntity.status(403).body(Page.empty());
         }
 
-        // SỬ DỤNG method mới có search
+        // Gọi service với finalKhoaPhongId đã được xác định
         Page<NhanVien> nhanViens = nhanVienService.searchNhanVien(tenDangNhap, page, size, finalKhoaPhongId, search);
+
+        logger.info("Returning {} employees for user {} (role: {})",
+                nhanViens.getContent().size(), tenDangNhap, role);
+
         return ResponseEntity.ok(nhanViens);
     }
 
-
-
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP', 'NGUOITONGHOP_1KP')")
     public ResponseEntity<NhanVien> getNhanVienById(@PathVariable Long id) {
         logger.info("GET /nhanvien/{} request received", id);
         return nhanVienService.getNhanVienById(id)
@@ -95,7 +131,7 @@ public class NhanVienController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP', 'NGUOITONGHOP_1KP')")
     public ResponseEntity<?> updateNhanVien(@RequestHeader("Authorization") String token, @PathVariable Long id, @Valid @RequestBody NhanVien nhanVienDetails, BindingResult bindingResult) {
         logger.info("PUT /nhanvien/{} request received", id);
         if (bindingResult.hasErrors()) {
@@ -122,7 +158,7 @@ public class NhanVienController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP', 'NGUOITONGHOP_1KP')")
     public ResponseEntity<?> disableNhanVien(@RequestHeader("Authorization") String token, @PathVariable Long id) {
         logger.info("DELETE /nhanvien/{} request received", id);
         String tenDangNhap = jwtService.extractUsername(token.substring(7));
@@ -144,13 +180,13 @@ public class NhanVienController {
     }
 
     @GetMapping("/khoaPhong/{khoaPhongId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP', 'NGUOITONGHOP_1KP')")
     public ResponseEntity<List<NhanVien>> getNhanVienByKhoaPhongId(@RequestHeader("Authorization") String token, @PathVariable Long khoaPhongId) {
         logger.info("GET /nhanvien/khoaPhong/{} request received", khoaPhongId);
         String tenDangNhap = jwtService.extractUsername(token.substring(7));
         String role = jwtService.extractRole(token.substring(7));
         logger.info("User: {}, Role: {}", tenDangNhap, role);
-        List<NhanVien> nhanViens = nhanVienService.getNhanVienByPhongBanId(tenDangNhap, khoaPhongId); // Sửa tên phương thức
+        List<NhanVien> nhanViens = nhanVienService.getNhanVienByPhongBanId(tenDangNhap, khoaPhongId);
         return ResponseEntity.ok(nhanViens);
     }
 }

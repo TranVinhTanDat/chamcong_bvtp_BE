@@ -65,11 +65,12 @@ public class NhanVienService {
             logger.info("ChucVu set to null");
         }
 
-        // Kiểm tra quyền NGUOICHAMCONG
-        if (user.getRole().getTenVaiTro().equals("NGUOICHAMCONG") &&
+        // *** CẬP NHẬT: Kiểm tra quyền cho NGUOICHAMCONG và NGUOITONGHOP_1KP ***
+        String userRole = user.getRole().getTenVaiTro();
+        if ((userRole.equals("NGUOICHAMCONG") || userRole.equals("NGUOITONGHOP_1KP")) &&
                 !user.getKhoaPhong().getId().equals(khoaPhongId)) {
-            logger.error("NGUOICHAMCONG permission check failed: UserKhoaPhongId: {}, RequestedKhoaPhongId: {}",
-                    user.getKhoaPhong().getId(), khoaPhongId);
+            logger.error("{} permission check failed: UserKhoaPhongId: {}, RequestedKhoaPhongId: {}",
+                    userRole, user.getKhoaPhong().getId(), khoaPhongId);
             throw new SecurityException("Chỉ được thêm nhân viên thuộc khoa/phòng của bạn");
         }
 
@@ -88,7 +89,7 @@ public class NhanVienService {
             nhanVien.setMaNV(nhanVien.getMaNV().trim()); // Trim whitespace
         }
 
-        // THÊM MỚI: Kiểm tra số điện thoại trùng lặp
+        // Kiểm tra số điện thoại trùng lặp
         if (nhanVien.getSoDienThoai() != null && !nhanVien.getSoDienThoai().trim().isEmpty()) {
             Optional<NhanVien> existingBySDT = nhanVienRepository.findBySoDienThoaiAndTrangThai(nhanVien.getSoDienThoai().trim(), 1);
             if (existingBySDT.isPresent()) {
@@ -135,11 +136,12 @@ public class NhanVienService {
             logger.info("ChucVu set to null");
         }
 
-        // Kiểm tra quyền NGUOICHAMCONG
-        if (user.getRole().getTenVaiTro().equals("NGUOICHAMCONG") &&
+        // *** CẬP NHẬT: Kiểm tra quyền cho NGUOICHAMCONG và NGUOITONGHOP_1KP ***
+        String userRole = user.getRole().getTenVaiTro();
+        if ((userRole.equals("NGUOICHAMCONG") || userRole.equals("NGUOITONGHOP_1KP")) &&
                 !user.getKhoaPhong().getId().equals(khoaPhongId)) {
-            logger.error("NGUOICHAMCONG permission check failed: UserKhoaPhongId: {}, RequestedKhoaPhongId: {}",
-                    user.getKhoaPhong().getId(), khoaPhongId);
+            logger.error("{} permission check failed: UserKhoaPhongId: {}, RequestedKhoaPhongId: {}",
+                    userRole, user.getKhoaPhong().getId(), khoaPhongId);
             throw new SecurityException("Chỉ được cập nhật nhân viên thuộc khoa/phòng của bạn");
         }
 
@@ -165,7 +167,7 @@ public class NhanVienService {
             nhanVien.setMaNV(null); // Cho phép để trống
         }
 
-        // THÊM MỚI: Kiểm tra số điện thoại trùng lặp nếu thay đổi
+        // Kiểm tra số điện thoại trùng lặp nếu thay đổi
         if (nhanVienDetails.getSoDienThoai() != null && !nhanVienDetails.getSoDienThoai().trim().isEmpty()) {
             String newSDT = nhanVienDetails.getSoDienThoai().trim();
             if (nhanVien.getSoDienThoai() == null || !nhanVien.getSoDienThoai().equals(newSDT)) {
@@ -187,17 +189,34 @@ public class NhanVienService {
         return nhanVienRepository.save(nhanVien);
     }
 
+    // *** CẬP NHẬT: Cải thiện logic phân quyền ***
     public Page<NhanVien> getAllNhanVien(String tenDangNhap, int page, int size, Long khoaPhongId) {
         User user = userRepository.findByTenDangNhap(tenDangNhap)
                 .orElseThrow(() -> new SecurityException("Người dùng không tồn tại"));
+
+        String userRole = user.getRole().getTenVaiTro();
+        Long userKhoaPhongId = user.getKhoaPhong().getId();
         Long finalKhoaPhongId = khoaPhongId;
 
-        logger.info("Fetching NhanVien for User: {}, Role: {}, KhoaPhongId: {}",
-                tenDangNhap, user.getRole().getTenVaiTro(), finalKhoaPhongId);
-        if (user.getRole().getTenVaiTro().equals("NGUOICHAMCONG")) {
-            finalKhoaPhongId = user.getKhoaPhong().getId();
-        } else if (user.getRole().getTenVaiTro().equals("ADMIN") && khoaPhongId == null) {
-            finalKhoaPhongId = null;
+        logger.info("Fetching NhanVien for User: {}, Role: {}, RequestedKhoaPhongId: {}, UserKhoaPhongId: {}",
+                tenDangNhap, userRole, khoaPhongId, userKhoaPhongId);
+
+        // *** LOGIC PHÂN QUYỀN THEO ROLE ***
+        switch (userRole) {
+            case "ADMIN":
+            case "NGUOITONGHOP":
+                // ADMIN và NGUOITONGHOP: Có thể xem tất cả hoặc filter
+                finalKhoaPhongId = khoaPhongId; // null = tất cả, có giá trị = filter
+                break;
+
+            case "NGUOITONGHOP_1KP":
+            case "NGUOICHAMCONG":
+                // Các role này chỉ được xem khoa phòng của mình
+                finalKhoaPhongId = userKhoaPhongId;
+                break;
+
+            default:
+                throw new SecurityException("Role không được hỗ trợ: " + userRole);
         }
 
         Pageable pageable = PageRequest.of(page, size);
@@ -216,12 +235,16 @@ public class NhanVienService {
         NhanVien nhanVien = nhanVienRepository.findByIdAndTrangThai(id, 1)
                 .orElseThrow(() -> new IllegalStateException("Nhân viên với ID " + id + " không tồn tại hoặc đã bị vô hiệu hóa"));
 
+        String userRole = user.getRole().getTenVaiTro();
         logger.info("Disabling NhanVien with ID: {}, User Role: {}, User KhoaPhongId: {}",
-                id, user.getRole().getTenVaiTro(), user.getKhoaPhong().getId());
-        if (user.getRole().getTenVaiTro().equals("NGUOICHAMCONG") &&
+                id, userRole, user.getKhoaPhong().getId());
+
+        // *** CẬP NHẬT: Kiểm tra quyền cho NGUOICHAMCONG và NGUOITONGHOP_1KP ***
+        if ((userRole.equals("NGUOICHAMCONG") || userRole.equals("NGUOITONGHOP_1KP")) &&
                 !user.getKhoaPhong().getId().equals(nhanVien.getKhoaPhong().getId())) {
             throw new SecurityException("Chỉ được vô hiệu hóa nhân viên thuộc khoa/phòng của bạn");
         }
+
         nhanVien.setTrangThai(0);
         nhanVienRepository.save(nhanVien);
     }
@@ -229,30 +252,58 @@ public class NhanVienService {
     public List<NhanVien> getNhanVienByPhongBanId(String tenDangNhap, Long khoaPhongId) {
         User user = userRepository.findByTenDangNhap(tenDangNhap)
                 .orElseThrow(() -> new SecurityException("Người dùng không tồn tại"));
+
+        String userRole = user.getRole().getTenVaiTro();
         logger.info("Fetching NhanVien for KhoaPhongId: {}, User Role: {}, User KhoaPhongId: {}",
-                khoaPhongId, user.getRole().getTenVaiTro(), user.getKhoaPhong().getId());
-        if (user.getRole().getTenVaiTro().equals("NGUOICHAMCONG") &&
+                khoaPhongId, userRole, user.getKhoaPhong().getId());
+
+        // *** CẬP NHẬT: Kiểm tra quyền cho NGUOICHAMCONG và NGUOITONGHOP_1KP ***
+        if ((userRole.equals("NGUOICHAMCONG") || userRole.equals("NGUOITONGHOP_1KP")) &&
                 !user.getKhoaPhong().getId().equals(khoaPhongId)) {
             throw new SecurityException("Chỉ được xem nhân viên thuộc khoa/phòng của bạn");
         }
+
         return nhanVienRepository.findByKhoaPhongIdAndTrangThai(khoaPhongId, 1);
     }
 
-    // THÊM method này vào NhanVienService.java:
-
+    // *** CẬP NHẬT: Method search với logic phân quyền rõ ràng ***
     public Page<NhanVien> searchNhanVien(String tenDangNhap, int page, int size, Long khoaPhongId, String search) {
         User user = userRepository.findByTenDangNhap(tenDangNhap)
                 .orElseThrow(() -> new SecurityException("Người dùng không tồn tại"));
+
+        String userRole = user.getRole().getTenVaiTro();
+        Long userKhoaPhongId = user.getKhoaPhong().getId();
         Long finalKhoaPhongId = khoaPhongId;
 
-        logger.info("Searching NhanVien for User: {}, Role: {}, KhoaPhongId: {}, Search: {}",
-                tenDangNhap, user.getRole().getTenVaiTro(), finalKhoaPhongId, search);
+        logger.info("Searching NhanVien for User: {}, Role: {}, RequestedKhoaPhongId: {}, UserKhoaPhongId: {}, Search: {}",
+                tenDangNhap, userRole, khoaPhongId, userKhoaPhongId, search);
 
-        // Kiểm tra quyền truy cập
-        if (user.getRole().getTenVaiTro().equals("NGUOICHAMCONG")) {
-            finalKhoaPhongId = user.getKhoaPhong().getId();
-        } else if (user.getRole().getTenVaiTro().equals("ADMIN") && khoaPhongId == null) {
-            finalKhoaPhongId = null;
+        // *** LOGIC PHÂN QUYỀN THEO ROLE ***
+        switch (userRole) {
+            case "ADMIN":
+            case "NGUOITONGHOP":
+                // ADMIN và NGUOITONGHOP: Có thể xem tất cả hoặc filter
+                finalKhoaPhongId = khoaPhongId; // null = tất cả, có giá trị = filter
+                logger.info("{} access: viewing {} employees", userRole,
+                        khoaPhongId == null ? "ALL" : "khoaPhongId=" + khoaPhongId);
+                break;
+
+            case "NGUOITONGHOP_1KP":
+            case "NGUOICHAMCONG":
+                // Các role này chỉ được xem khoa phòng của mình, BỎ QUA tham số khoaPhongId
+                finalKhoaPhongId = userKhoaPhongId;
+                logger.info("{} access: restricted to userKhoaPhongId={}", userRole, userKhoaPhongId);
+
+                // *** SECURITY WARNING: Nếu có attempt truy cập khoa phòng khác ***
+                if (khoaPhongId != null && !khoaPhongId.equals(userKhoaPhongId)) {
+                    logger.warn("SECURITY ALERT: User {} (role: {}) attempted to access khoaPhongId={} but restricted to userKhoaPhongId={}",
+                            tenDangNhap, userRole, khoaPhongId, userKhoaPhongId);
+                }
+                break;
+
+            default:
+                logger.error("Unknown or unsupported role: {}", userRole);
+                throw new SecurityException("Role không được hỗ trợ: " + userRole);
         }
 
         Pageable pageable = PageRequest.of(page, size);

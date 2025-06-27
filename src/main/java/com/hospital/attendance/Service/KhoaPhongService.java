@@ -2,6 +2,7 @@ package com.hospital.attendance.Service;
 
 import com.hospital.attendance.Entity.KhoaPhong;
 import com.hospital.attendance.Repository.KhoaPhongRepository;
+import com.hospital.attendance.Repository.NhanVienRepository; // *** THÊM MỚI ***
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,10 @@ public class KhoaPhongService {
 
     @Autowired
     private KhoaPhongRepository khoaPhongRepository;
+
+    // *** THÊM MỚI: Inject NhanVienRepository để check constraint ***
+    @Autowired
+    private NhanVienRepository nhanVienRepository;
 
     public List<KhoaPhong> getAllKhoaPhongs() {
         return khoaPhongRepository.findAll();
@@ -50,13 +55,18 @@ public class KhoaPhongService {
         String tenKhoaPhong = khoaPhong.getTenKhoaPhong().trim();
         String maKhoaPhong = khoaPhong.getMaKhoaPhong().trim().toUpperCase(); // Chuẩn hóa uppercase
 
-        // Validate mã khoa phòng format
+        // *** CẢI THIỆN: Validate mã khoa phòng format ***
         if (!maKhoaPhong.matches("^[A-Z0-9_-]+$")) {
             throw new IllegalStateException("Mã khoa/phòng chỉ được chứa chữ in hoa, số, dấu gạch dưới (_) và dấu gạch ngang (-)");
         }
 
-        if (maKhoaPhong.length() > 50) {
-            throw new IllegalStateException("Mã khoa/phòng không được quá 50 ký tự");
+        if (maKhoaPhong.length() < 2 || maKhoaPhong.length() > 50) {
+            throw new IllegalStateException("Mã khoa/phòng phải có từ 2-50 ký tự");
+        }
+
+        // *** CẢI THIỆN: Validate tên khoa phòng ***
+        if (tenKhoaPhong.length() < 3 || tenKhoaPhong.length() > 200) {
+            throw new IllegalStateException("Tên khoa/phòng phải có từ 3-200 ký tự");
         }
 
         // Kiểm tra trùng lặp tên khoa phòng
@@ -99,13 +109,17 @@ public class KhoaPhongService {
         String tenKhoaPhong = khoaPhongDetails.getTenKhoaPhong().trim();
         String maKhoaPhong = khoaPhongDetails.getMaKhoaPhong().trim().toUpperCase();
 
-        // Validate mã khoa phòng format
+        // *** CẢI THIỆN: Validate format ***
         if (!maKhoaPhong.matches("^[A-Z0-9_-]+$")) {
             throw new IllegalStateException("Mã khoa/phòng chỉ được chứa chữ in hoa, số, dấu gạch dưới (_) và dấu gạch ngang (-)");
         }
 
-        if (maKhoaPhong.length() > 50) {
-            throw new IllegalStateException("Mã khoa/phòng không được quá 50 ký tự");
+        if (maKhoaPhong.length() < 2 || maKhoaPhong.length() > 50) {
+            throw new IllegalStateException("Mã khoa/phòng phải có từ 2-50 ký tự");
+        }
+
+        if (tenKhoaPhong.length() < 3 || tenKhoaPhong.length() > 200) {
+            throw new IllegalStateException("Tên khoa/phòng phải có từ 3-200 ký tự");
         }
 
         // Kiểm tra trùng lặp tên khoa phòng (nếu thay đổi)
@@ -139,8 +153,14 @@ public class KhoaPhongService {
         KhoaPhong khoaPhong = khoaPhongRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("Khoa/phòng với ID " + id + " không tồn tại"));
 
-        // TODO: Kiểm tra xem có nhân viên nào đang thuộc khoa phòng này không
-        // Optional: Thêm validation để không cho xóa nếu còn nhân viên
+        // *** CẢI THIỆN: Kiểm tra xem có nhân viên nào đang thuộc khoa phòng này không ***
+        long activeEmployeeCount = nhanVienRepository.findByKhoaPhongIdAndTrangThai(id, 1).size();
+        if (activeEmployeeCount > 0) {
+            throw new IllegalStateException(
+                    "Không thể xóa khoa/phòng này vì còn " + activeEmployeeCount +
+                            " nhân viên đang hoạt động. Vui lòng chuyển họ sang khoa/phòng khác trước."
+            );
+        }
 
         khoaPhongRepository.delete(khoaPhong);
         logger.info("Deleted KhoaPhong successfully");

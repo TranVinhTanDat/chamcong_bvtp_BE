@@ -27,8 +27,9 @@ public class KhoaPhongController {
     @Autowired
     private KhoaPhongService khoaPhongService;
 
+    // *** CẬP NHẬT: Thêm NGUOITONGHOP_1KP ***
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP', 'NGUOITONGHOP_1KP')")
     public ResponseEntity<List<KhoaPhong>> getAllKhoaPhongs() {
         logger.info("GET /khoa-phong request received");
         List<KhoaPhong> khoaPhongs = khoaPhongService.getAllKhoaPhongs();
