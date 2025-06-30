@@ -31,3 +31,26 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Custom - Hospital Attendance ###
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# JWT Security Keys - CRITICAL: DO NOT COMMIT
+src/main/resources/private_key.pem
+src/main/resources/public_key.pem
+
+# Database files
+*.db
+*.sql
+
+# Logs
+*.log
+logs/
+
+# Spring Boot
+spring-boot-*.log
+application-*.properties

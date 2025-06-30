@@ -2,6 +2,7 @@ package com.hospital.attendance.Config;
 
 import com.hospital.attendance.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -21,6 +22,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -28,6 +30,9 @@ public class SecurityConfig {
 
     private final JwtRequestFilter jwtRequestFilter;
     private final UserService userService;
+
+    @Value("${VPS_HOST:localhost}")
+    private String vpsHost;
 
     @Autowired
     public SecurityConfig(JwtRequestFilter jwtRequestFilter, @Lazy UserService userService) {
@@ -127,10 +132,22 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+
+        // Dynamic CORS origins based on environment
+        List<String> allowedOrigins = Arrays.asList(
+                "http://localhost:3000",
+                "http://localhost",
+                "http://" + vpsHost,
+                "https://" + vpsHost,
+                "http://" + vpsHost + ":3000",
+                "https://" + vpsHost + ":3000"
+        );
+
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
