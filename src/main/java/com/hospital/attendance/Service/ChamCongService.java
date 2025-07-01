@@ -106,19 +106,50 @@ public class ChamCongService {
     /**
      * UPDATED: Loại bỏ kiểm tra trùng ca khi cập nhật
      */
-    public ChamCong capNhatTrangThai(Long id, String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu) {
+    public ChamCong capNhatTrangThai(String tenDangNhap, Long id, String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu) {
+        // 1. Kiểm tra quyền người sửa
+        User user = userRepository.findByTenDangNhap(tenDangNhap)
+                .orElseThrow(() -> new SecurityException("Người dùng không tồn tại"));
+
+        String role = user.getRole().getTenVaiTro();
+        if (!role.equals("ADMIN") && !role.equals("NGUOICHAMCONG")) {
+            throw new SecurityException("Bạn không có quyền sửa chấm công");
+        }
+
+        // 2. Lấy bản ghi chấm công
         ChamCong chamCong = chamCongRepository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("Bản ghi chấm công với ID " + id + " không tồn tại"));
 
-        // Kiểm tra nhân viên còn hoạt động
+        // 3. Kiểm tra nhân viên còn hoạt động
         NhanVien nhanVien = nhanVienRepository.findByIdAndTrangThai(chamCong.getNhanVien().getId(), 1)
                 .orElseThrow(() -> new IllegalStateException("Nhân viên đã bị vô hiệu hóa"));
 
-        // *** REMOVED: Kiểm tra trùng lặp ca cụ thể khi cập nhật ***
-        // Đã loại bỏ logic kiểm tra trùng ca khi cập nhật
-        // Cho phép cập nhật thành bất kỳ ca nào
+        // 4. Kiểm tra quyền sửa cho nhân viên này
+        if (role.equals("NGUOICHAMCONG") &&
+                !user.getKhoaPhong().getId().equals(nhanVien.getKhoaPhong().getId())) {
+            throw new SecurityException("Chỉ được sửa chấm công cho nhân viên cùng khoa/phòng");
+        }
 
-        // Cập nhật bản ghi
+        // 5. Kiểm tra thời gian - NGUOICHAMCONG chỉ được sửa trong ngày hôm nay
+        if (role.equals("NGUOICHAMCONG")) {
+            Date today = new Date();
+            Date chamCongDate = chamCong.getThoiGianCheckIn();
+
+            Calendar todayCal = Calendar.getInstance();
+            todayCal.setTime(today);
+
+            Calendar chamCongCal = Calendar.getInstance();
+            chamCongCal.setTime(chamCongDate);
+
+            boolean isSameDay = todayCal.get(Calendar.YEAR) == chamCongCal.get(Calendar.YEAR) &&
+                    todayCal.get(Calendar.DAY_OF_YEAR) == chamCongCal.get(Calendar.DAY_OF_YEAR);
+
+            if (!isSameDay) {
+                throw new SecurityException("NGUOICHAMCONG chỉ được sửa chấm công trong ngày hôm nay");
+            }
+        }
+
+        // 6. Cập nhật bản ghi
         return capNhatBanGhiChamCong(chamCong, trangThai, caLamViecId, maKyHieuChamCong, ghiChu);
     }
 
@@ -488,13 +519,47 @@ public class ChamCongService {
                                           String trangThai, Integer shift, String caLamViecId,
                                           String maKyHieuChamCong, String ghiChu, String filterDate) {
 
-        // 1. Kiểm tra quyền người chấm công (chỉ ADMIN)
+        // 1. Kiểm tra quyền người chấm công
         User chamCongUser = userRepository.findByTenDangNhap(tenDangNhapChamCong)
                 .orElseThrow(() -> new SecurityException("Người chấm công không tồn tại"));
 
         String vaiTroChamCong = chamCongUser.getRole().getTenVaiTro();
-        if (!vaiTroChamCong.equals("ADMIN")) {
-            throw new SecurityException("Chỉ ADMIN mới có quyền cập nhật hàng loạt");
+        if (!vaiTroChamCong.equals("ADMIN") && !vaiTroChamCong.equals("NGUOICHAMCONG")) {
+            throw new SecurityException("Chỉ ADMIN và NGUOICHAMCONG mới có quyền cập nhật hàng loạt");
+        }
+
+// 1.1. Kiểm tra quyền truy cập khoa phòng cho NGUOICHAMCONG
+        if (vaiTroChamCong.equals("NGUOICHAMCONG") &&
+                !chamCongUser.getKhoaPhong().getId().equals(khoaPhongId)) {
+            throw new SecurityException("Chỉ được cập nhật chấm công cho nhân viên cùng khoa/phòng");
+        }
+
+// 1.2. Kiểm tra ngày hiện tại cho NGUOICHAMCONG
+        if (vaiTroChamCong.equals("NGUOICHAMCONG")) {
+            if (filterDate == null || filterDate.isEmpty()) {
+                throw new SecurityException("NGUOICHAMCONG chỉ được sửa chấm công hàng loạt trong ngày hôm nay");
+            }
+
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                Date filterDateParsed = sdf.parse(filterDate);
+                Date today = new Date();
+
+                Calendar filterCal = Calendar.getInstance();
+                filterCal.setTime(filterDateParsed);
+
+                Calendar todayCal = Calendar.getInstance();
+                todayCal.setTime(today);
+
+                boolean isSameDay = filterCal.get(Calendar.YEAR) == todayCal.get(Calendar.YEAR) &&
+                        filterCal.get(Calendar.DAY_OF_YEAR) == todayCal.get(Calendar.DAY_OF_YEAR);
+
+                if (!isSameDay) {
+                    throw new SecurityException("NGUOICHAMCONG chỉ được sửa chấm công hàng loạt trong ngày hôm nay");
+                }
+            } catch (ParseException e) {
+                throw new SecurityException("Định dạng ngày không hợp lệ");
+            }
         }
 
         // 2. Kiểm tra khoa phòng tồn tại

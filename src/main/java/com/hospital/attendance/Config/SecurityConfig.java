@@ -71,8 +71,8 @@ public class SecurityConfig {
                         .requestMatchers("/chamcong/chitiet-homnay").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP", "NGUOITONGHOP_1KP")
 
                         // Chấm công nâng cao - Chỉ ADMIN
-                        .requestMatchers("/chamcong/{id}/trangthai").hasRole("ADMIN")
-                        .requestMatchers("/chamcong/update-bulk").hasRole("ADMIN")
+                        .requestMatchers("/chamcong/{id}/trangthai").hasAnyRole("ADMIN", "NGUOICHAMCONG")
+                        .requestMatchers("/chamcong/update-bulk").hasAnyRole("ADMIN", "NGUOICHAMCONG")
                         .requestMatchers("/chamcong/update-symbol").hasRole("ADMIN")
 
                         // Tổng hợp - Chỉ NGUOITONGHOP (NGUOITONGHOP_1KP KHÔNG có quyền này)

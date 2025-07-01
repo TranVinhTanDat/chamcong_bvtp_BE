@@ -69,9 +69,12 @@ public class ChamCongController {
     }
 
     // Chỉ ADMIN có quyền sửa trạng thái chấm công
+    // ADMIN và NGUOICHAMCONG có quyền sửa trạng thái chấm công
     @PutMapping("/{id}/trangthai")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> capNhatTrangThai(@PathVariable Long id, @RequestBody Map<String, String> request) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG')")
+    public ResponseEntity<?> capNhatTrangThai(@RequestHeader("Authorization") String token,
+                                              @PathVariable Long id, @RequestBody Map<String, String> request) {
+        String tenDangNhap = jwtService.extractUsername(token.substring(7));
         String trangThai = request.get("trangThai");
         String caLamViecId = request.get("caLamViecId");
         String maKyHieuChamCong = request.get("maKyHieuChamCong");
@@ -90,10 +93,12 @@ public class ChamCongController {
         }
 
         try {
-            ChamCong chamCong = chamCongService.capNhatTrangThai(id, trangThai, caLamViecId, maKyHieuChamCong, ghiChu);
+            ChamCong chamCong = chamCongService.capNhatTrangThai(tenDangNhap, id, trangThai, caLamViecId, maKyHieuChamCong, ghiChu);
             return ResponseEntity.ok(chamCong);
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("{\"error\": \"" + e.getMessage() + "\"}");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
         }
