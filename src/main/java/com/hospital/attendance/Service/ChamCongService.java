@@ -774,5 +774,4 @@ public class ChamCongService {
         // Các ký hiệu làm việc
         return Arrays.asList("X", "VT", "RT", "S", "C", "T", "T12", "T16", "CT").contains(symbol);
     }
-
 }
