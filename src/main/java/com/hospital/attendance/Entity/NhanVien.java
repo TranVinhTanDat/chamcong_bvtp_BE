@@ -14,7 +14,7 @@ import java.util.Date;
 @Table(name = "nhanvien", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"email"}),
         @UniqueConstraint(columnNames = {"ma_nv"}, name = "UK_ma_nv_unique"),
-        @UniqueConstraint(columnNames = {"so_dien_thoai"}, name = "UK_so_dien_thoai_unique")
+        @UniqueConstraint(columnNames = {"so_dien_thoai"}, name = "UK_so_dien_thoai_unique") // THÊM MỚI
 })
 public class NhanVien {
     @Id
@@ -24,8 +24,7 @@ public class NhanVien {
     @Column(name = "ho_ten", nullable = false)
     private String hoTen;
 
-    // *** THAY ĐỔI: Cho phép email null ***
-    @Column(name = "email", unique = true, nullable = true)  // Đổi từ nullable = false thành nullable = true
+    @Column(name = "email", unique = true, nullable = false)
     private String email;
 
     @Column(name = "ma_nv", unique = true)
@@ -37,7 +36,7 @@ public class NhanVien {
     @PastOrPresent(message = "Ngày sinh không được là tương lai")
     private Date ngayThangNamSinh;
 
-    @Column(name = "so_dien_thoai", unique = true, nullable = true)  // Thêm nullable = true
+    @Column(name = "so_dien_thoai", unique = true) // THÊM unique = true
     private String soDienThoai;
 
     @ManyToOne
