@@ -37,7 +37,7 @@ public class NhanVien {
     @PastOrPresent(message = "Ngày sinh không được là tương lai")
     private Date ngayThangNamSinh;
 
-    @Column(name = "so_dien_thoai", unique = true)
+    @Column(name = "so_dien_thoai", unique = true, nullable = true)  // Thêm nullable = true
     private String soDienThoai;
 
     @ManyToOne
