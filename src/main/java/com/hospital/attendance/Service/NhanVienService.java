@@ -65,7 +65,7 @@ public class NhanVienService {
             logger.info("ChucVu set to null");
         }
 
-        // *** CẬP NHẬT: Kiểm tra quyền cho NGUOICHAMCONG và NGUOITONGHOP_1KP ***
+        // Kiểm tra quyền cho NGUOICHAMCONG và NGUOITONGHOP_1KP
         String userRole = user.getRole().getTenVaiTro();
         if ((userRole.equals("NGUOICHAMCONG") || userRole.equals("NGUOITONGHOP_1KP")) &&
                 !user.getKhoaPhong().getId().equals(khoaPhongId)) {
@@ -74,10 +74,17 @@ public class NhanVienService {
             throw new SecurityException("Chỉ được thêm nhân viên thuộc khoa/phòng của bạn");
         }
 
-        // Kiểm tra email trùng lặp
-        Optional<NhanVien> existingByEmail = nhanVienRepository.findByEmailAndTrangThai(nhanVien.getEmail(), 1);
-        if (existingByEmail.isPresent()) {
-            throw new IllegalStateException("Email '" + nhanVien.getEmail() + "' đã tồn tại");
+        // *** THAY ĐỔI: Kiểm tra email trùng lặp CHỈ KHI email không null ***
+        if (nhanVien.getEmail() != null && !nhanVien.getEmail().trim().isEmpty()) {
+            String emailTrimmed = nhanVien.getEmail().trim();
+            Optional<NhanVien> existingByEmail = nhanVienRepository.findByEmailAndTrangThai(emailTrimmed, 1);
+            if (existingByEmail.isPresent()) {
+                throw new IllegalStateException("Email '" + emailTrimmed + "' đã tồn tại");
+            }
+            nhanVien.setEmail(emailTrimmed); // Trim whitespace
+        } else {
+            nhanVien.setEmail(null); // Cho phép email null
+            logger.info("Email set to null");
         }
 
         // Kiểm tra mã NV trùng lặp
@@ -136,7 +143,7 @@ public class NhanVienService {
             logger.info("ChucVu set to null");
         }
 
-        // *** CẬP NHẬT: Kiểm tra quyền cho NGUOICHAMCONG và NGUOITONGHOP_1KP ***
+        // Kiểm tra quyền cho NGUOICHAMCONG và NGUOITONGHOP_1KP
         String userRole = user.getRole().getTenVaiTro();
         if ((userRole.equals("NGUOICHAMCONG") || userRole.equals("NGUOITONGHOP_1KP")) &&
                 !user.getKhoaPhong().getId().equals(khoaPhongId)) {
@@ -145,12 +152,20 @@ public class NhanVienService {
             throw new SecurityException("Chỉ được cập nhật nhân viên thuộc khoa/phòng của bạn");
         }
 
-        // Kiểm tra email trùng lặp nếu thay đổi
-        if (!nhanVien.getEmail().equals(nhanVienDetails.getEmail())) {
-            Optional<NhanVien> existingByEmail = nhanVienRepository.findByEmailAndTrangThai(nhanVienDetails.getEmail(), 1);
-            if (existingByEmail.isPresent()) {
-                throw new IllegalStateException("Email '" + nhanVienDetails.getEmail() + "' đã tồn tại");
+        // *** THAY ĐỔI: Kiểm tra email trùng lặp CHỈ KHI email không null ***
+        if (nhanVienDetails.getEmail() != null && !nhanVienDetails.getEmail().trim().isEmpty()) {
+            String newEmail = nhanVienDetails.getEmail().trim();
+            // Chỉ kiểm tra trùng lặp nếu email thay đổi
+            if (nhanVien.getEmail() == null || !nhanVien.getEmail().equals(newEmail)) {
+                Optional<NhanVien> existingByEmail = nhanVienRepository.findByEmailAndTrangThai(newEmail, 1);
+                if (existingByEmail.isPresent()) {
+                    throw new IllegalStateException("Email '" + newEmail + "' đã tồn tại");
+                }
             }
+            nhanVien.setEmail(newEmail);
+        } else {
+            nhanVien.setEmail(null); // Cho phép set email thành null
+            logger.info("Email set to null");
         }
 
         // Kiểm tra mã NV trùng lặp nếu thay đổi
@@ -182,7 +197,6 @@ public class NhanVienService {
         }
 
         nhanVien.setHoTen(nhanVienDetails.getHoTen());
-        nhanVien.setEmail(nhanVienDetails.getEmail());
         nhanVien.setNgayThangNamSinh(nhanVienDetails.getNgayThangNamSinh());
         nhanVien.setKhoaPhong(khoaPhongRepository.findById(khoaPhongId).get());
         logger.info("Updating NhanVien in database");

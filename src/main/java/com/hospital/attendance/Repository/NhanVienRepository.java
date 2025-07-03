@@ -22,17 +22,17 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, Long> {
     @Query("SELECT n FROM NhanVien n WHERE (:khoaPhongId IS NULL OR n.khoaPhong.id = :khoaPhongId) AND n.trangThai = :trangThai")
     Page<NhanVien> findByKhoaPhongIdAndTrangThai(@Param("khoaPhongId") Long khoaPhongId, @Param("trangThai") Integer trangThai, Pageable pageable);
 
-    // THÊM MỚI: Tìm kiếm với keyword
+    // *** CẬP NHẬT: Tìm kiếm với keyword, xử lý email null ***
     @Query("SELECT n FROM NhanVien n WHERE " +
             "(:khoaPhongId IS NULL OR n.khoaPhong.id = :khoaPhongId) AND " +
             "n.trangThai = :trangThai AND " +
             "(:search IS NULL OR :search = '' OR " +
             "LOWER(n.hoTen) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "LOWER(n.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "LOWER(n.maNV) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "LOWER(n.soDienThoai) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "(n.email IS NOT NULL AND LOWER(n.email) LIKE LOWER(CONCAT('%', :search, '%'))) OR " +
+            "(n.maNV IS NOT NULL AND LOWER(n.maNV) LIKE LOWER(CONCAT('%', :search, '%'))) OR " +
+            "(n.soDienThoai IS NOT NULL AND LOWER(n.soDienThoai) LIKE LOWER(CONCAT('%', :search, '%'))) OR " +
             "LOWER(n.khoaPhong.tenKhoaPhong) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "LOWER(n.chucVu.tenChucVu) LIKE LOWER(CONCAT('%', :search, '%')))")
+            "(n.chucVu IS NOT NULL AND LOWER(n.chucVu.tenChucVu) LIKE LOWER(CONCAT('%', :search, '%'))))")
     Page<NhanVien> findBySearchAndKhoaPhongIdAndTrangThai(
             @Param("search") String search,
             @Param("khoaPhongId") Long khoaPhongId,
