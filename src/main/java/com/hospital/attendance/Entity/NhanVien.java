@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.PastOrPresent;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -24,20 +24,19 @@ public class NhanVien {
     @Column(name = "ho_ten", nullable = false)
     private String hoTen;
 
-    // *** THAY ĐỔI: Cho phép email null ***
-    @Column(name = "email", unique = true, nullable = true)  // Đổi từ nullable = false thành nullable = true
+    @Column(name = "email", unique = true, nullable = true)
     private String email;
 
     @Column(name = "ma_nv", unique = true)
     private String maNV;
 
-    @Temporal(TemporalType.DATE)
+    // *** FIX: Thay đổi từ Date sang LocalDate để tránh timezone issue ***
     @Column(name = "ngay_thang_nam_sinh")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
     @PastOrPresent(message = "Ngày sinh không được là tương lai")
-    private Date ngayThangNamSinh;
+    private LocalDate ngayThangNamSinh;  // Đổi từ Date thành LocalDate
 
-    @Column(name = "so_dien_thoai", unique = true, nullable = true)  // Thêm nullable = true
+    @Column(name = "so_dien_thoai", unique = true, nullable = true)
     private String soDienThoai;
 
     @ManyToOne
