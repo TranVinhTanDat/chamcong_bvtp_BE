@@ -772,3 +772,4 @@ public class ChamCongService {
         return Arrays.asList("X", "VT", "RT", "S", "C", "T", "T12", "T16", "CT").contains(symbol);
     }
 }
+
