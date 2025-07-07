@@ -52,23 +52,7 @@ public class ChamCongService {
         sevenDaysAgo.set(Calendar.SECOND, 0);
         sevenDaysAgo.set(Calendar.MILLISECOND, 0);
 
-        return checkDate.after(sevenDaysAgo.getTime()) && checkDate.before(today.getTime());
-    }
-
-
-    // Thêm 3 hàm helper này vào đầu class, ngay sau các @Autowired
-    private int getMaxShiftsForKhoaPhong(Long khoaPhongId) {
-        // Khoa cấp cứu (id = 3) có 3 ca, các khoa khác có 2 ca
-        return khoaPhongId == 3 ? 3 : 2;
-    }
-
-    private String getShiftName(int shift) {
-        switch(shift) {
-            case 1: return "sáng";
-            case 2: return "chiều";
-            case 3: return "tối";
-            default: return "ca " + shift;
-        }
+        return checkDate.after(sevenDaysAgo.getTime()) && !checkDate.after(today.getTime());
     }
 
     /**
@@ -97,13 +81,11 @@ public class ChamCongService {
         java.sql.Date startOfDay = new java.sql.Date(dateRange[0].getTime());
         java.sql.Date endOfDay = new java.sql.Date(dateRange[1].getTime());
 
-        // 5. KIỂM TRA GIỚI HẠN CHẤM CÔNG TRONG NGÀY được lọc
+        // 5. KIỂM TRA GIỚI HẠN 2 LẦN CHẤM CÔNG TRONG NGÀY được lọc
         Long soLanChamCongTrongNgay = chamCongRepository.countByNhanVienAndThoiGianCheckInBetween(
                 nhanVien, startOfDay, endOfDay);
 
-        int maxShifts = getMaxShiftsForKhoaPhong(nhanVien.getKhoaPhong().getId());
-
-        if (soLanChamCongTrongNgay >= maxShifts) {
+        if (soLanChamCongTrongNgay >= 2) {
             // Lấy thông tin chi tiết để thông báo
             List<ChamCong> danhSachChamCongTrongNgay = chamCongRepository.findByNhanVienAndDateRange(
                     nhanVien, startOfDay, endOfDay);
@@ -116,7 +98,7 @@ public class ChamCongService {
                 ngayHienThi = "ngày " + sdf.format(new Date()) + " (hôm nay)";
             }
 
-            StringBuilder thongBao = new StringBuilder("Nhân viên đã chấm công đủ " + maxShifts + " lần trong " + ngayHienThi + ": ");
+            StringBuilder thongBao = new StringBuilder("Nhân viên đã chấm công đủ 2 lần trong " + ngayHienThi + ": ");
             for (int i = 0; i < danhSachChamCongTrongNgay.size(); i++) {
                 ChamCong cc = danhSachChamCongTrongNgay.get(i);
                 thongBao.append("Lần ").append(i + 1).append(": ")
@@ -142,9 +124,6 @@ public class ChamCongService {
     /**
      * UPDATED: Loại bỏ kiểm tra trùng ca khi cập nhật
      */
-    /**
-     * UPDATED: Cho phép NGUOICHAMCONG sửa chấm công trong vòng 7 ngày gần nhất
-     */
     public ChamCong capNhatTrangThai(String tenDangNhap, Long id, String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu) {
         // 1. Kiểm tra quyền người sửa
         User user = userRepository.findByTenDangNhap(tenDangNhap)
@@ -169,7 +148,7 @@ public class ChamCongService {
             throw new SecurityException("Chỉ được sửa chấm công cho nhân viên cùng khoa/phòng");
         }
 
-        // 5. UPDATED: Kiểm tra thời gian - NGUOICHAMCONG được sửa trong vòng 7 ngày gần nhất
+        // 5. Kiểm tra thời gian - NGUOICHAMCONG chỉ được sửa trong vòng 7 ngày
         if (role.equals("NGUOICHAMCONG")) {
             Date chamCongDate = chamCong.getThoiGianCheckIn();
 
@@ -410,13 +389,11 @@ public class ChamCongService {
         List<ChamCong> danhSachChamCong = chamCongRepository.findByNhanVienAndDateRange(
                 nhanVien, startOfDay, endOfDay);
 
-        int maxShifts = getMaxShiftsForKhoaPhong(nhanVien.getKhoaPhong().getId());
-
         Map<String, Object> result = new HashMap<>();
         result.put("nhanVienId", nhanVien.getId());
         result.put("nhanVienHoTen", nhanVien.getHoTen());
         result.put("soLanChamCongTrongNgay", soLanChamCong);
-        result.put("coTheCheck", soLanChamCong < maxShifts);
+        result.put("coTheCheck", soLanChamCong < 2);
         result.put("danhSachChamCong", danhSachChamCong);
 
         // *** UPDATED: Loại bỏ logic kiểm tra ca đã chấm công ***
@@ -493,38 +470,29 @@ public class ChamCongService {
 
         for (NhanVien nhanVien : danhSachNhanVien) {
             try {
-                // Xác định số ca tối đa cho khoa phòng này
-                int maxShifts = getMaxShiftsForKhoaPhong(nhanVien.getKhoaPhong().getId());
-
-                // Kiểm tra nếu shift = 3 nhưng không phải khoa cấp cứu
-                if (shift == 3 && nhanVien.getKhoaPhong().getId() != 3) {
-                    thatBai.add(nhanVien.getHoTen() + " - Ca tối chỉ áp dụng cho khoa cấp cứu");
-                    continue;
-                }
-
-                // Kiểm tra đã chấm công tối đa chưa
+                // Kiểm tra đã chấm công tối đa 2 lần trong ngày chưa
                 Long soLanChamCongTrongNgay = chamCongRepository.countByNhanVienAndThoiGianCheckInBetween(
                         nhanVien, startOfDay, endOfDay);
 
-                if (soLanChamCongTrongNgay >= maxShifts) {
-                    thatBai.add(nhanVien.getHoTen() + " - Đã chấm công đủ " + maxShifts + " lần trong ngày");
+                if (soLanChamCongTrongNgay >= 2) {
+                    thatBai.add(nhanVien.getHoTen() + " - Đã chấm công đủ 2 lần trong ngày");
                     continue;
                 }
 
-                // Kiểm tra xem shift này đã được chấm công chưa
+                // Kiểm tra xem shift này đã được chấm công chưa bằng cách đếm số lần chấm công
                 List<ChamCong> danhSachChamCongTrongNgay = chamCongRepository.findByNhanVienAndDateRange(
                         nhanVien, startOfDay, endOfDay);
 
-                // Logic kiểm tra theo shift cụ thể
-                if (shift <= danhSachChamCongTrongNgay.size()) {
-                    thatBai.add(nhanVien.getHoTen() + " - Đã chấm công cho ca " + getShiftName(shift));
+                // Nếu shift = 1 và đã có bản ghi nào, hoặc shift = 2 và đã có >= 2 bản ghi thì skip
+                if ((shift == 1 && !danhSachChamCongTrongNgay.isEmpty()) ||
+                        (shift == 2 && danhSachChamCongTrongNgay.size() >= 2)) {
+                    thatBai.add(nhanVien.getHoTen() + " - Đã chấm công cho ca " + (shift == 1 ? "sáng" : "chiều"));
                     continue;
                 }
 
-                // Kiểm tra thứ tự ca (phải chấm ca trước đó trước)
-                if (shift > danhSachChamCongTrongNgay.size() + 1) {
-                    String requiredShift = getShiftName(danhSachChamCongTrongNgay.size() + 1);
-                    thatBai.add(nhanVien.getHoTen() + " - Phải chấm công ca " + requiredShift + " trước");
+                // Nếu shift = 2 nhưng chưa có shift 1, bắt buộc phải chấm shift 1 trước
+                if (shift == 2 && danhSachChamCongTrongNgay.isEmpty()) {
+                    thatBai.add(nhanVien.getHoTen() + " - Phải chấm công ca sáng trước khi chấm ca chiều");
                     continue;
                 }
 
@@ -532,7 +500,7 @@ public class ChamCongService {
                 ChamCong chamCong = taoMoiBanGhiChamCong(nhanVien, trangThai, caLamViecId,
                         maKyHieuChamCong, ghiChu, filterDate);
 
-                thanhCong.add(nhanVien.getHoTen() + " - " + trangThai + " ca " + getShiftName(shift));
+                thanhCong.add(nhanVien.getHoTen() + " - " + trangThai + " ca " + (shift == 1 ? "sáng" : "chiều"));
 
             } catch (Exception e) {
                 thatBai.add(nhanVien.getHoTen() + " - Lỗi: " + e.getMessage());
@@ -568,16 +536,16 @@ public class ChamCongService {
             throw new SecurityException("Chỉ ADMIN và NGUOICHAMCONG mới có quyền cập nhật hàng loạt");
         }
 
-        // 1.1. Kiểm tra quyền truy cập khoa phòng cho NGUOICHAMCONG
+// 1.1. Kiểm tra quyền truy cập khoa phòng cho NGUOICHAMCONG
         if (vaiTroChamCong.equals("NGUOICHAMCONG") &&
                 !chamCongUser.getKhoaPhong().getId().equals(khoaPhongId)) {
             throw new SecurityException("Chỉ được cập nhật chấm công cho nhân viên cùng khoa/phòng");
         }
 
-        // 1.2. UPDATED: Kiểm tra thời gian cho NGUOICHAMCONG - cho phép trong vòng 7 ngày
+// 1.2. Kiểm tra thời gian cho NGUOICHAMCONG - trong vòng 7 ngày
         if (vaiTroChamCong.equals("NGUOICHAMCONG")) {
             if (filterDate == null || filterDate.isEmpty()) {
-                throw new SecurityException("NGUOICHAMCONG phải chỉ định ngày cụ thể để cập nhật hàng loạt");
+                throw new SecurityException("NGUOICHAMCONG phải cung cấp ngày cần cập nhật");
             }
 
             try {
@@ -585,13 +553,12 @@ public class ChamCongService {
                 Date filterDateParsed = sdf.parse(filterDate);
 
                 if (!isWithin7Days(filterDateParsed)) {
-                    throw new SecurityException("NGUOICHAMCONG chỉ được sửa chấm công hàng loạt trong vòng 7 ngày gần nhất");
+                    throw new SecurityException("NGUOICHAMCONG chỉ được sửa chấm công trong vòng 7 ngày gần nhất");
                 }
             } catch (ParseException e) {
                 throw new SecurityException("Định dạng ngày không hợp lệ");
             }
         }
-
         // 2. Kiểm tra khoa phòng tồn tại
         if (!khoaPhongRepository.existsById(khoaPhongId)) {
             throw new IllegalStateException("Khoa phòng không tồn tại");
@@ -622,22 +589,22 @@ public class ChamCongService {
                 // Xác định bản ghi cần update theo shift
                 ChamCong chamCongCanUpdate = null;
                 if (shift == 1 && !danhSachChamCongTrongNgay.isEmpty()) {
-                    chamCongCanUpdate = danhSachChamCongTrongNgay.get(0); // Ca sáng
+                    chamCongCanUpdate = danhSachChamCongTrongNgay.get(0); // Bản ghi đầu tiên (ca sáng)
                 } else if (shift == 2 && danhSachChamCongTrongNgay.size() >= 2) {
-                    chamCongCanUpdate = danhSachChamCongTrongNgay.get(1); // Ca chiều
-                } else if (shift == 3 && danhSachChamCongTrongNgay.size() >= 3) {
-                    chamCongCanUpdate = danhSachChamCongTrongNgay.get(2); // Ca tối
+                    chamCongCanUpdate = danhSachChamCongTrongNgay.get(1); // Bản ghi thứ hai (ca chiều)
                 }
 
                 if (chamCongCanUpdate == null) {
-                    thatBai.add(nhanVien.getHoTen() + " - Không tìm thấy bản ghi chấm công cho ca " + getShiftName(shift));
+                    thatBai.add(nhanVien.getHoTen() + " - Không tìm thấy bản ghi chấm công cho ca " +
+                            (shift == 1 ? "sáng" : "chiều"));
                     continue;
                 }
 
                 // Cập nhật bản ghi
                 capNhatBanGhiChamCong(chamCongCanUpdate, trangThai, caLamViecId, maKyHieuChamCong, ghiChu);
 
-                thanhCong.add(nhanVien.getHoTen() + " - Cập nhật thành " + trangThai + " ca " + getShiftName(shift));
+                thanhCong.add(nhanVien.getHoTen() + " - Cập nhật thành " + trangThai + " ca " +
+                        (shift == 1 ? "sáng" : "chiều"));
 
             } catch (Exception e) {
                 thatBai.add(nhanVien.getHoTen() + " - Lỗi: " + e.getMessage());
@@ -709,8 +676,6 @@ public class ChamCongService {
             targetRecord = existingRecords.get(0); // Ca sáng - bản ghi đầu tiên
         } else if (shift == 2 && existingRecords.size() >= 2) {
             targetRecord = existingRecords.get(1); // Ca chiều - bản ghi thứ hai
-        } else if (shift == 3 && existingRecords.size() >= 3) {
-            targetRecord = existingRecords.get(2); // Ca tối - bản ghi thứ ba
         }
 
         // 6. Xử lý theo ký hiệu mới
@@ -735,11 +700,8 @@ public class ChamCongService {
                 if (shift == 1) {
                     checkInCal.set(Calendar.HOUR_OF_DAY, 7); // 7:00 AM cho ca sáng
                     checkInCal.set(Calendar.MINUTE, 0);
-                } else if (shift == 2) {
+                } else {
                     checkInCal.set(Calendar.HOUR_OF_DAY, 13); // 1:00 PM cho ca chiều
-                    checkInCal.set(Calendar.MINUTE, 0);
-                } else if (shift == 3) {
-                    checkInCal.set(Calendar.HOUR_OF_DAY, 18); // 6:00 PM cho ca tối
                     checkInCal.set(Calendar.MINUTE, 0);
                 }
 

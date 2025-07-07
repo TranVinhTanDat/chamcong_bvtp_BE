@@ -105,7 +105,7 @@ public class ChamCongController {
     }
 
     @GetMapping("/lichsu")
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP', 'NGUOITONGHOP_1KP')")
     public ResponseEntity<?> layLichSuChamCong(
             @RequestHeader("Authorization") String token,
             @RequestParam(required = false) Integer year,
@@ -213,8 +213,8 @@ public class ChamCongController {
         if (trangThai == null || (!trangThai.equals("LÀM") && !trangThai.equals("NGHỈ"))) {
             return ResponseEntity.badRequest().body("{\"error\": \"Trạng thái phải là LÀM hoặc NGHỈ\"}");
         }
-        if (shift == null || (shift < 1 || shift > 3)) {
-            return ResponseEntity.badRequest().body("{\"error\": \"Ca phải là 1 (sáng), 2 (chiều), hoặc 3 (tối)\"}");
+        if (shift == null || (shift != 1 && shift != 2)) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Ca phải là 1 (sáng) hoặc 2 (chiều)\"}");
         }
         if (caLamViecId == null) {
             return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp caLamViecId\"}");
@@ -266,8 +266,8 @@ public class ChamCongController {
         if (trangThai == null || (!trangThai.equals("LÀM") && !trangThai.equals("NGHỈ"))) {
             return ResponseEntity.badRequest().body("{\"error\": \"Trạng thái phải là LÀM hoặc NGHỈ\"}");
         }
-        if (shift == null || (shift < 1 || shift > 3)) {
-            return ResponseEntity.badRequest().body("{\"error\": \"Ca phải là 1 (sáng), 2 (chiều), hoặc 3 (tối)\"}");
+        if (shift == null || (shift != 1 && shift != 2)) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Ca phải là 1 (sáng) hoặc 2 (chiều)\"}");
         }
         if (caLamViecId == null) {
             return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp caLamViecId\"}");
@@ -306,9 +306,9 @@ public class ChamCongController {
             Integer year = Integer.parseInt(request.get("year").toString());
             String newSymbol = (String) request.get("newSymbol");
 
-            if (shift < 1 || shift > 3) {
+            if (shift != 1 && shift != 2) {
                 return ResponseEntity.badRequest()
-                        .body("{\"error\": \"Ca phải là 1 (sáng), 2 (chiều), hoặc 3 (tối)\"}");
+                        .body("{\"error\": \"Ca phải là 1 (sáng) hoặc 2 (chiều)\"}");
             }
 
             if (day < 1 || day > 31) {
