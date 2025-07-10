@@ -342,4 +342,66 @@ public class ChamCongController {
                     .body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
         }
     }
+
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG')")
+    public ResponseEntity<?> xoaChamCong(@RequestHeader("Authorization") String token,
+                                         @PathVariable Long id) {
+        String tenDangNhap = jwtService.extractUsername(token.substring(7));
+
+        try {
+            chamCongService.xoaChamCong(tenDangNhap, id);
+            return ResponseEntity.ok("{\"message\": \"Xóa chấm công thành công\"}");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
+        }
+    }
+
+
+    @DeleteMapping("/delete-bulk")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG')")
+    public ResponseEntity<?> xoaChamCongHangLoat(
+            @RequestHeader("Authorization") String token,
+            @RequestBody Map<String, Object> request) {
+
+        String tenDangNhap = jwtService.extractUsername(token.substring(7));
+
+        // Parse parameters
+        Long khoaPhongId = request.get("khoaPhongId") != null ?
+                Long.parseLong(request.get("khoaPhongId").toString()) : null;
+        Integer shift = request.get("shift") != null ?
+                Integer.parseInt(request.get("shift").toString()) : null;
+        String filterDate = (String) request.get("filterDate");
+
+        // Validation
+        if (khoaPhongId == null) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Phải chọn khoa phòng\"}");
+        }
+        if (shift == null || (shift != 1 && shift != 2)) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Ca phải là 1 (sáng) hoặc 2 (chiều)\"}");
+        }
+        if (filterDate == null || filterDate.isEmpty()) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp ngày cần xóa\"}");
+        }
+
+        try {
+            Map<String, Object> result = chamCongService.xoaChamCongHangLoat(
+                    tenDangNhap, khoaPhongId, shift, filterDate
+            );
+            return ResponseEntity.ok(result);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
+        }
+    }
 }

@@ -771,6 +771,173 @@ public class ChamCongService {
         // Các ký hiệu làm việc
         return Arrays.asList("X", "VT", "RT", "S", "C", "T", "T12", "T16", "CT").contains(symbol);
     }
+
+
+    public void xoaChamCong(String tenDangNhap, Long id) {
+        // 1. Kiểm tra quyền người xóa
+        User user = userRepository.findByTenDangNhap(tenDangNhap)
+                .orElseThrow(() -> new SecurityException("Người dùng không tồn tại"));
+
+        String role = user.getRole().getTenVaiTro();
+        if (!role.equals("ADMIN") && !role.equals("NGUOICHAMCONG")) {
+            throw new SecurityException("Bạn không có quyền xóa chấm công");
+        }
+
+        // 2. Lấy bản ghi chấm công
+        ChamCong chamCong = chamCongRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Bản ghi chấm công với ID " + id + " không tồn tại"));
+
+        // 3. Kiểm tra nhân viên còn hoạt động
+        NhanVien nhanVien = nhanVienRepository.findByIdAndTrangThai(chamCong.getNhanVien().getId(), 1)
+                .orElseThrow(() -> new IllegalStateException("Nhân viên đã bị vô hiệu hóa"));
+
+        // 4. Kiểm tra quyền xóa cho nhân viên này
+        if (role.equals("NGUOICHAMCONG") &&
+                !user.getKhoaPhong().getId().equals(nhanVien.getKhoaPhong().getId())) {
+            throw new SecurityException("Chỉ được xóa chấm công cho nhân viên cùng khoa/phòng");
+        }
+
+        // 5. Kiểm tra thời gian - NGUOICHAMCONG chỉ được xóa trong vòng 7 ngày
+        if (role.equals("NGUOICHAMCONG")) {
+            Date chamCongDate = chamCong.getThoiGianCheckIn();
+
+            if (!isWithin7Days(chamCongDate)) {
+                throw new SecurityException("NGUOICHAMCONG chỉ được xóa chấm công trong vòng 7 ngày gần nhất");
+            }
+        }
+
+        // 6. Xóa bản ghi
+        chamCongRepository.delete(chamCong);
+    }
+
+
+    public Map<String, Object> xoaChamCongHangLoat(String tenDangNhap, Long khoaPhongId, Integer shift, String filterDate) {
+        // 1. Kiểm tra quyền người xóa
+        User user = userRepository.findByTenDangNhap(tenDangNhap)
+                .orElseThrow(() -> new SecurityException("Người dùng không tồn tại"));
+
+        String role = user.getRole().getTenVaiTro();
+        if (!role.equals("ADMIN") && !role.equals("NGUOICHAMCONG")) {
+            throw new SecurityException("Bạn không có quyền xóa chấm công");
+        }
+
+        // 2. Kiểm tra quyền truy cập khoa phòng cho NGUOICHAMCONG
+        if (role.equals("NGUOICHAMCONG") &&
+                !user.getKhoaPhong().getId().equals(khoaPhongId)) {
+            throw new SecurityException("Chỉ được xóa chấm công cho nhân viên cùng khoa/phòng");
+        }
+
+        // 3. Kiểm tra thời gian cho NGUOICHAMCONG - trong vòng 7 ngày
+        if (role.equals("NGUOICHAMCONG")) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                Date filterDateParsed = sdf.parse(filterDate);
+
+                if (!isWithin7Days(filterDateParsed)) {
+                    throw new SecurityException("NGUOICHAMCONG chỉ được xóa chấm công trong vòng 7 ngày gần nhất");
+                }
+            } catch (ParseException e) {
+                throw new SecurityException("Định dạng ngày không hợp lệ");
+            }
+        }
+
+        // 4. Kiểm tra khoa phòng tồn tại
+        if (!khoaPhongRepository.existsById(khoaPhongId)) {
+            throw new IllegalStateException("Khoa phòng không tồn tại");
+        }
+
+        // 5. Lấy danh sách nhân viên trong khoa phòng (chỉ những người đang hoạt động)
+        List<NhanVien> danhSachNhanVien = nhanVienRepository.findByKhoaPhongIdAndTrangThai(khoaPhongId, 1);
+
+        if (danhSachNhanVien.isEmpty()) {
+            throw new IllegalStateException("Không có nhân viên nào trong khoa phòng này");
+        }
+
+        // 6. Tạo khoảng thời gian dựa trên filterDate
+        Date[] dateRange = getDateRange(filterDate);
+        java.sql.Date startOfDay = new java.sql.Date(dateRange[0].getTime());
+        java.sql.Date endOfDay = new java.sql.Date(dateRange[1].getTime());
+
+        // 7. Tìm và xóa các bản ghi chấm công
+        List<String> thanhCong = new ArrayList<>();
+        List<String> thatBai = new ArrayList<>();
+
+        for (NhanVien nhanVien : danhSachNhanVien) {
+            try {
+                // Tìm bản ghi chấm công theo shift
+                List<ChamCong> danhSachChamCongTrongNgay = chamCongRepository.findByNhanVienAndDateRange(
+                        nhanVien, startOfDay, endOfDay);
+
+                // *** LOGIC MỚI: Xác định theo CA LÀM VIỆC thay vì thứ tự thời gian ***
+                ChamCong chamCongCanXoa = null;
+
+                for (ChamCong chamCong : danhSachChamCongTrongNgay) {
+                    if (chamCong.getCaLamViec() != null) {
+                        int recordShift = 1; // Mặc định ca sáng
+
+                        // Xác định shift dựa trên ca làm việc
+                        Long caLamViecId = chamCong.getCaLamViec().getId();
+                        String tenCaLamViec = chamCong.getCaLamViec().getTenCaLamViec();
+
+                        if (caLamViecId == 11 || (tenCaLamViec != null && tenCaLamViec.toLowerCase().contains("sáng"))) {
+                            recordShift = 1;
+                        } else if (caLamViecId == 12 || (tenCaLamViec != null && tenCaLamViec.toLowerCase().contains("chiều"))) {
+                            recordShift = 2;
+                        } else {
+                            // Fallback: dựa trên thời gian
+                            String timeStr = chamCong.getThoiGianCheckIn().toString();
+                            if (timeStr.contains(" ")) {
+                                String timePart = timeStr.split(" ")[1];
+                                if (timePart != null && timePart.contains(":")) {
+                                    try {
+                                        int hour = Integer.parseInt(timePart.split(":")[0]);
+                                        recordShift = hour < 12 ? 1 : 2;
+                                    } catch (NumberFormatException e) {
+                                        recordShift = 1; // Mặc định ca sáng nếu không parse được
+                                    }
+                                }
+                            }
+                        }
+
+                        // Nếu shift khớp với yêu cầu xóa
+                        if (recordShift == shift) {
+                            chamCongCanXoa = chamCong;
+                            break; // Tìm thấy rồi thì thoát
+                        }
+                    }
+                }
+
+                if (chamCongCanXoa == null) {
+                    thatBai.add(nhanVien.getHoTen() + " - Không tìm thấy bản ghi chấm công cho ca " +
+                            (shift == 1 ? "sáng" : "chiều"));
+                    continue;
+                }
+
+                // Xóa bản ghi
+                chamCongRepository.delete(chamCongCanXoa);
+
+                thanhCong.add(nhanVien.getHoTen() + " - Đã xóa chấm công ca " +
+                        (shift == 1 ? "sáng" : "chiều"));
+
+            } catch (Exception e) {
+                thatBai.add(nhanVien.getHoTen() + " - Lỗi: " + e.getMessage());
+            }
+        }
+
+        // 8. Tạo kết quả trả về
+        Map<String, Object> result = new HashMap<>();
+        result.put("tongSoNhanVien", danhSachNhanVien.size());
+        result.put("soLuongThanhCong", thanhCong.size());
+        result.put("soLuongThatBai", thatBai.size());
+        result.put("chiTietThanhCong", thanhCong);
+        result.put("chiTietThatBai", thatBai);
+
+        String thongBaoTongKet = String.format("Xóa chấm công hàng loạt hoàn tất: %d/%d thành công",
+                thanhCong.size(), danhSachNhanVien.size());
+        result.put("message", thongBaoTongKet);
+
+        return result;
+    }
 }
 
 
