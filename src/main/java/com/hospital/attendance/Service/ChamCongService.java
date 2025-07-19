@@ -208,6 +208,7 @@ public class ChamCongService {
         }
     }
 
+    // CẬP NHẬT method taoMoiBanGhiChamCong trong ChamCongService
     private ChamCong taoMoiBanGhiChamCong(NhanVien nhanVien, String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu, String filterDate) {
         ChamCong chamCong = new ChamCong();
         chamCong.setNhanVien(nhanVien);
@@ -241,7 +242,8 @@ public class ChamCongService {
         chamCong.setTrangThaiChamCong(trangThaiChamCongEntity);
 
         if ("LÀM".equals(trangThai)) {
-            xetCaLamViecChoTrangThaiLam(chamCong, caLamViecId);
+            // CẬP NHẬT: Truyền thêm ghiChu cho method xetCaLamViecChoTrangThaiLam
+            xetCaLamViecChoTrangThaiLam(chamCong, caLamViecId, ghiChu);
         } else if ("NGHỈ".equals(trangThai)) {
             xetThongTinChoTrangThaiNghi(chamCong, caLamViecId, maKyHieuChamCong, ghiChu, nhanVien);
         }
@@ -249,6 +251,7 @@ public class ChamCongService {
         return chamCongRepository.save(chamCong);
     }
 
+    // CẬP NHẬT method capNhatBanGhiChamCong trong ChamCongService
     private ChamCong capNhatBanGhiChamCong(ChamCong chamCong, String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu) {
         // Set trạng thái chấm công
         TrangThaiChamCong trangThaiChamCongEntity = trangThaiChamCongRepository.findByTenTrangThai(trangThai)
@@ -256,9 +259,9 @@ public class ChamCongService {
         chamCong.setTrangThaiChamCong(trangThaiChamCongEntity);
 
         if ("LÀM".equals(trangThai)) {
-            xetCaLamViecChoTrangThaiLam(chamCong, caLamViecId);
-            chamCong.setGhiChu(null); // Clear ghi chú khi chuyển sang trạng thái LÀM
-            chamCong.setKyHieuChamCong(null); // Clear ký hiệu chấm công riêng lẻ
+            // CẬP NHẬT: Truyền thêm ghiChu cho method xetCaLamViecChoTrangThaiLam
+            xetCaLamViecChoTrangThaiLam(chamCong, caLamViecId, ghiChu);
+            chamCong.setKyHieuChamCong(null); // Clear ký hiệu chấm công riêng lẻ cho trạng thái LÀM
         } else if ("NGHỈ".equals(trangThai)) {
             xetThongTinChoTrangThaiNghi(chamCong, caLamViecId, maKyHieuChamCong, ghiChu, chamCong.getNhanVien());
         }
@@ -266,7 +269,7 @@ public class ChamCongService {
         return chamCongRepository.save(chamCong);
     }
 
-    private void xetCaLamViecChoTrangThaiLam(ChamCong chamCong, String caLamViecId) {
+    private void xetCaLamViecChoTrangThaiLam(ChamCong chamCong, String caLamViecId, String ghiChu) {
         if (caLamViecId == null) {
             throw new IllegalStateException("Phải cung cấp caLamViecId khi trạng thái là LÀM");
         }
@@ -274,8 +277,19 @@ public class ChamCongService {
             Long caId = Long.parseLong(caLamViecId);
             CaLamViec caLamViec = caLamViecRepository.findById(caId)
                     .orElseThrow(() -> new IllegalStateException("Ca làm việc với ID " + caLamViecId + " không tồn tại"));
+
             chamCong.setCaLamViec(caLamViec);
             chamCong.setKyHieuChamCong(caLamViec.getKyHieuChamCong());
+
+            // THÊM MỚI: Kiểm tra nếu là ca công tác/CSSKCBĐDL (ID = 9) thì cho phép ghi chú
+            if (caId == 9L) {
+                // Ca công tác/CSSKCBĐDL - cho phép ghi chú (có thể null)
+                chamCong.setGhiChu(ghiChu); // Có thể null, không ép buộc
+            } else {
+                // Các ca khác - xóa ghi chú để tránh nhầm lẫn
+                chamCong.setGhiChu(null);
+            }
+
         } catch (NumberFormatException e) {
             throw new IllegalStateException("caLamViecId phải là số hợp lệ");
         }

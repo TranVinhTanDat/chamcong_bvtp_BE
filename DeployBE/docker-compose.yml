@@ -19,7 +19,7 @@ services:
 
   backend:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
     container_name: hospital-backend-api
     environment:

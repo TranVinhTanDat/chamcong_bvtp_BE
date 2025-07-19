@@ -1,7 +1,9 @@
 package com.hospital.attendance.Controller;
 
+import com.hospital.attendance.Entity.CaLamViec;
 import com.hospital.attendance.Entity.ChamCong;
 import com.hospital.attendance.Entity.User;
+import com.hospital.attendance.Repository.CaLamViecRepository;
 import com.hospital.attendance.Service.ChamCongService;
 import com.hospital.attendance.Service.JwtService;
 import com.hospital.attendance.Service.UserService;
@@ -12,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +32,10 @@ public class ChamCongController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private CaLamViecRepository caLamViecRepository;
+
+    // CẬP NHẬT method checkIn trong ChamCongController
     @PostMapping("/checkin")
     public ResponseEntity<?> checkIn(@RequestHeader("Authorization") String token, @RequestBody Map<String, String> request) {
         String tenDangNhap = jwtService.extractUsername(token.substring(7));
@@ -46,11 +54,16 @@ public class ChamCongController {
         if (trangThai == null || (!trangThai.equals("LÀM") && !trangThai.equals("NGHỈ"))) {
             return ResponseEntity.badRequest().body("{\"error\": \"Trạng thái phải là LÀM hoặc NGHỈ\"}");
         }
-        // UPDATED: Yêu cầu caLamViecId cho cả LÀM và NGHỈ
         if (caLamViecId == null) {
             return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp caLamViecId\"}");
         }
-        // UPDATED: Chỉ yêu cầu maKyHieuChamCong khi trạng thái là NGHỈ, ghiChu có thể null
+
+        // VALIDATION MỚI: Kiểm tra ghi chú cho ca công tác/CSSKCBĐDL
+        if (trangThai.equals("LÀM") && "9".equals(caLamViecId)) {
+            // Đối với ca công tác/CSSKCBĐDL, ghiChu có thể null hoặc có giá trị
+            // Không cần validation đặc biệt, chỉ cần thông báo cho frontend biết
+        }
+
         if (trangThai.equals("NGHỈ") && maKyHieuChamCong == null) {
             return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp maKyHieuChamCong khi trạng thái là NGHỈ\"}");
         }
@@ -68,8 +81,7 @@ public class ChamCongController {
         }
     }
 
-    // Chỉ ADMIN có quyền sửa trạng thái chấm công
-    // ADMIN và NGUOICHAMCONG có quyền sửa trạng thái chấm công
+    // CẬP NHẬT method capNhatTrangThai trong ChamCongController
     @PutMapping("/{id}/trangthai")
     @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG')")
     public ResponseEntity<?> capNhatTrangThai(@RequestHeader("Authorization") String token,
@@ -83,11 +95,16 @@ public class ChamCongController {
         if (trangThai == null || (!trangThai.equals("LÀM") && !trangThai.equals("NGHỈ"))) {
             return ResponseEntity.badRequest().body("{\"error\": \"Trạng thái phải là LÀM hoặc NGHỈ\"}");
         }
-        // UPDATED: Yêu cầu caLamViecId cho cả LÀM và NGHỈ
         if (caLamViecId == null) {
             return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp caLamViecId\"}");
         }
-        // UPDATED: Chỉ yêu cầu maKyHieuChamCong khi trạng thái là NGHỈ, ghiChu có thể null
+
+        // VALIDATION MỚI: Kiểm tra ghi chú cho ca công tác/CSSKCBĐDL
+        if (trangThai.equals("LÀM") && "9".equals(caLamViecId)) {
+            // Đối với ca công tác/CSSKCBĐDL, ghiChu có thể null hoặc có giá trị
+            // Không cần validation đặc biệt
+        }
+
         if (trangThai.equals("NGHỈ") && maKyHieuChamCong == null) {
             return ResponseEntity.badRequest().body("{\"error\": \"Phải cung cấp maKyHieuChamCong khi trạng thái là NGHỈ\"}");
         }
@@ -399,6 +416,61 @@ public class ChamCongController {
             return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
         } catch (SecurityException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
+        }
+    }
+
+    // THÊM MỚI: API để frontend kiểm tra ca làm việc có cần ghi chú hay không
+    @GetMapping("/ca-lam-viec/{id}/info")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    public ResponseEntity<?> layThongTinCaLamViec(@PathVariable Long id) {
+        try {
+            CaLamViec caLamViec = caLamViecRepository.findById(id)
+                    .orElseThrow(() -> new IllegalStateException("Ca làm việc với ID " + id + " không tồn tại"));
+
+            Map<String, Object> thongTinCa = new HashMap<>();
+            thongTinCa.put("id", caLamViec.getId());
+            thongTinCa.put("tenCaLamViec", caLamViec.getTenCaLamViec());
+            thongTinCa.put("canGhiChu", id == 9L); // Ca công tác/CSSKCBĐDL cần ghi chú
+            thongTinCa.put("batBuocGhiChu", false); // Ghi chú không bắt buộc, có thể null
+
+            // Thêm thông tin ký hiệu chấm công nếu có
+            if (caLamViec.getKyHieuChamCong() != null) {
+                thongTinCa.put("kyHieuChamCong", caLamViec.getKyHieuChamCong().getMaKyHieu());
+            }
+
+            return ResponseEntity.ok(thongTinCa);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
+        }
+    }
+
+    // THÊM MỚI: API để lấy danh sách tất cả ca làm việc kèm thông tin ghi chú
+    @GetMapping("/ca-lam-viec/all-with-info")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    public ResponseEntity<?> layTatCaCaLamViecKemThongTin() {
+        try {
+            List<CaLamViec> danhSachCa = caLamViecRepository.findAll();
+
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (CaLamViec ca : danhSachCa) {
+                Map<String, Object> thongTinCa = new HashMap<>();
+                thongTinCa.put("id", ca.getId());
+                thongTinCa.put("tenCaLamViec", ca.getTenCaLamViec());
+                thongTinCa.put("canGhiChu", ca.getId() == 9L); // Ca công tác/CSSKCBĐDL cần ghi chú
+                thongTinCa.put("batBuocGhiChu", false); // Ghi chú không bắt buộc
+
+                if (ca.getKyHieuChamCong() != null) {
+                    thongTinCa.put("kyHieuChamCong", ca.getKyHieuChamCong().getMaKyHieu());
+                }
+
+                result.add(thongTinCa);
+            }
+
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");

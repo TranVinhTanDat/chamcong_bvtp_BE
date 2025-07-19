@@ -34,7 +34,7 @@ build/
 
 ### Custom - Hospital Attendance ###
 # Environment files
-.env
+DeployBE/.env
 .env.local
 .env.production
 .env.development
