@@ -887,72 +887,35 @@ public class ChamCongService {
                     continue;
                 }
 
-                // *** LOGIC MỚI: Xóa bản ghi theo shift được chỉ định ***
-                // Sắp xếp theo thời gian (cũ nhất đầu tiên)
-                danhSachChamCongTrongNgay.sort((a, b) -> a.getThoiGianCheckIn().compareTo(b.getThoiGianCheckIn()));
+                // *** LOGIC MỚI HOÀN TOÀN: Tìm bản ghi phù hợp với shift ***
+                ChamCong targetRecord = findBestMatchForShift(danhSachChamCongTrongNgay, shift);
 
-                List<ChamCong> recordsToDelete = new ArrayList<>();
-
-                if (shift == 1) {
-                    // Xóa shift 1: Luôn xóa bản ghi đầu tiên
-                    if (!danhSachChamCongTrongNgay.isEmpty()) {
-                        ChamCong firstRecord = danhSachChamCongTrongNgay.get(0);
-                        recordsToDelete.add(firstRecord);
-                        System.out.println("🔄 Shift 1 - Xóa bản ghi đầu tiên: ID=" + firstRecord.getId() +
-                                ", Time=" + firstRecord.getThoiGianCheckIn());
-                    }
-                } else if (shift == 2) {
-                    // Xóa shift 2: Logic thông minh hơn
-                    if (danhSachChamCongTrongNgay.size() >= 2) {
-                        // Nếu có >= 2 bản ghi, xóa bản ghi thứ 2
-                        ChamCong secondRecord = danhSachChamCongTrongNgay.get(1);
-                        recordsToDelete.add(secondRecord);
-                        System.out.println("🔄 Shift 2 - Xóa bản ghi thứ 2: ID=" + secondRecord.getId() +
-                                ", Time=" + secondRecord.getThoiGianCheckIn());
-                    } else if (danhSachChamCongTrongNgay.size() == 1) {
-                        // Nếu chỉ có 1 bản ghi, kiểm tra xem có phải ca chiều không
-                        ChamCong onlyRecord = danhSachChamCongTrongNgay.get(0);
-                        boolean isAfternoonShift = isAfternoonRecord(onlyRecord);
-
-                        if (isAfternoonShift) {
-                            recordsToDelete.add(onlyRecord);
-                            System.out.println("🔄 Shift 2 - Xóa bản ghi duy nhất (ca chiều): ID=" + onlyRecord.getId() +
-                                    ", Time=" + onlyRecord.getThoiGianCheckIn());
-                        } else {
-                            System.out.println("🔄 Shift 2 - Bản ghi duy nhất là ca sáng, không xóa: ID=" + onlyRecord.getId());
-                        }
-                    }
-                }
-
-                if (recordsToDelete.isEmpty()) {
-                    thatBai.add(nhanVien.getHoTen() + " - Không tìm thấy bản ghi chấm công cho ca " +
+                if (targetRecord == null) {
+                    thatBai.add(nhanVien.getHoTen() + " - Không tìm thấy bản ghi chấm công phù hợp cho ca " +
                             (shift == 1 ? "sáng" : "chiều"));
                     continue;
                 }
 
-                // Xóa các bản ghi đã xác định
-                int deletedCount = 0;
-                for (ChamCong chamCongCanXoa : recordsToDelete) {
-                    try {
-                        chamCongRepository.delete(chamCongCanXoa);
-                        deletedCount++;
+                // Xóa bản ghi đã tìm thấy
+                try {
+                    chamCongRepository.delete(targetRecord);
 
-                        // Log để debug
-                        System.out.println("✅ Đã xóa bản ghi: ID=" + chamCongCanXoa.getId() +
-                                ", NhanVien=" + nhanVien.getHoTen() +
-                                ", CaLamViec=" + (chamCongCanXoa.getCaLamViec() != null ?
-                                chamCongCanXoa.getCaLamViec().getTenCaLamViec() : "N/A") +
-                                ", ThoiGian=" + chamCongCanXoa.getThoiGianCheckIn());
-                    } catch (Exception deleteEx) {
-                        System.err.println("❌ Lỗi xóa bản ghi ID=" + chamCongCanXoa.getId() + ": " + deleteEx.getMessage());
-                    }
-                }
+                    String caInfo = targetRecord.getCaLamViec() != null ?
+                            targetRecord.getCaLamViec().getTenCaLamViec() : "N/A";
 
-                if (deletedCount > 0) {
-                    thanhCong.add(nhanVien.getHoTen() + " - Đã xóa " + deletedCount + " bản ghi chấm công ca " +
-                            (shift == 1 ? "sáng" : "chiều"));
-                } else {
-                    thatBai.add(nhanVien.getHoTen() + " - Không thể xóa bản ghi nào");
+                    thanhCong.add(nhanVien.getHoTen() + " - Đã xóa chấm công ca " +
+                            (shift == 1 ? "sáng" : "chiều") + " (" + caInfo + ")");
+
+                    // Log để debug
+                    System.out.println("✅ Đã xóa bản ghi: ID=" + targetRecord.getId() +
+                            ", NhanVien=" + nhanVien.getHoTen() +
+                            ", CaLamViec=" + caInfo +
+                            ", Shift=" + shift +
+                            ", ThoiGian=" + targetRecord.getThoiGianCheckIn());
+
+                } catch (Exception deleteEx) {
+                    System.err.println("❌ Lỗi xóa bản ghi ID=" + targetRecord.getId() + ": " + deleteEx.getMessage());
+                    thatBai.add(nhanVien.getHoTen() + " - Lỗi khi xóa: " + deleteEx.getMessage());
                 }
 
             } catch (Exception e) {
@@ -974,6 +937,134 @@ public class ChamCongService {
         result.put("message", thongBaoTongKet);
 
         return result;
+    }
+
+    /**
+     * *** THÊM METHOD MỚI: Tìm bản ghi tốt nhất cho shift được chọn ***
+     */
+    private ChamCong findBestMatchForShift(List<ChamCong> records, Integer shift) {
+        if (records.isEmpty()) {
+            return null;
+        }
+
+        // Sắp xếp theo thời gian (cũ nhất đầu tiên)
+        records.sort((a, b) -> a.getThoiGianCheckIn().compareTo(b.getThoiGianCheckIn()));
+
+        if (shift == 1) {
+            // *** XÓA CA SÁNG: Áp dụng nhiều tiêu chí ưu tiên ***
+
+            // Tiêu chí 1: Ca Sáng chính thức (ID = 11)
+            for (ChamCong cc : records) {
+                if (cc.getCaLamViec() != null && cc.getCaLamViec().getId() == 11L) {
+                    System.out.println("🌅 [Ca Sáng] Tìm thấy ca chính thức ID=11: " + cc.getCaLamViec().getTenCaLamViec());
+                    return cc;
+                }
+            }
+
+            // Tiêu chí 2: Ca có tên chứa "sáng"
+            for (ChamCong cc : records) {
+                if (cc.getCaLamViec() != null &&
+                        cc.getCaLamViec().getTenCaLamViec() != null &&
+                        cc.getCaLamViec().getTenCaLamViec().toLowerCase().contains("sáng")) {
+                    System.out.println("🌅 [Ca Sáng] Tìm thấy ca tên chứa 'sáng': " + cc.getCaLamViec().getTenCaLamViec());
+                    return cc;
+                }
+            }
+
+            // Tiêu chí 3: Ca theo thời gian (trước 12h trưa)
+            for (ChamCong cc : records) {
+                if (isMorningRecord(cc)) {
+                    System.out.println("🌅 [Ca Sáng] Tìm thấy ca theo thời gian sáng: " +
+                            (cc.getCaLamViec() != null ? cc.getCaLamViec().getTenCaLamViec() : "N/A"));
+                    return cc;
+                }
+            }
+
+            // Tiêu chí 4: Fallback - bản ghi đầu tiên
+            ChamCong firstRecord = records.get(0);
+            System.out.println("🌅 [Ca Sáng] Fallback - lấy bản ghi đầu tiên: " +
+                    (firstRecord.getCaLamViec() != null ? firstRecord.getCaLamViec().getTenCaLamViec() : "N/A"));
+            return firstRecord;
+
+        } else if (shift == 2) {
+            // *** XÓA CA CHIỀU: Áp dụng nhiều tiêu chí ưu tiên ***
+
+            // Tiêu chí 1: Ca Chiều chính thức (ID = 12)
+            for (ChamCong cc : records) {
+                if (cc.getCaLamViec() != null && cc.getCaLamViec().getId() == 12L) {
+                    System.out.println("🌆 [Ca Chiều] Tìm thấy ca chính thức ID=12: " + cc.getCaLamViec().getTenCaLamViec());
+                    return cc;
+                }
+            }
+
+            // Tiêu chí 2: Ca có tên chứa "chiều"
+            for (ChamCong cc : records) {
+                if (cc.getCaLamViec() != null &&
+                        cc.getCaLamViec().getTenCaLamViec() != null &&
+                        cc.getCaLamViec().getTenCaLamViec().toLowerCase().contains("chiều")) {
+                    System.out.println("🌆 [Ca Chiều] Tìm thấy ca tên chứa 'chiều': " + cc.getCaLamViec().getTenCaLamViec());
+                    return cc;
+                }
+            }
+
+            // Tiêu chí 3: Ca theo thời gian (sau 12h trưa)
+            for (ChamCong cc : records) {
+                if (isAfternoonRecord(cc)) {
+                    System.out.println("🌆 [Ca Chiều] Tìm thấy ca theo thời gian chiều: " +
+                            (cc.getCaLamViec() != null ? cc.getCaLamViec().getTenCaLamViec() : "N/A"));
+                    return cc;
+                }
+            }
+
+            // Tiêu chí 4: Bản ghi thứ 2 nếu có >= 2 bản ghi
+            if (records.size() >= 2) {
+                ChamCong secondRecord = records.get(1);
+                System.out.println("🌆 [Ca Chiều] Lấy bản ghi thứ 2: " +
+                        (secondRecord.getCaLamViec() != null ? secondRecord.getCaLamViec().getTenCaLamViec() : "N/A"));
+                return secondRecord;
+            }
+
+            // Tiêu chí 5: Nếu chỉ có 1 bản ghi và không phải ca sáng rõ ràng
+            if (records.size() == 1) {
+                ChamCong onlyRecord = records.get(0);
+
+                // Kiểm tra xem có phải ca sáng rõ ràng không
+                boolean isClearMorning = (onlyRecord.getCaLamViec() != null &&
+                        (onlyRecord.getCaLamViec().getId() == 11L ||
+                                (onlyRecord.getCaLamViec().getTenCaLamViec() != null &&
+                                        onlyRecord.getCaLamViec().getTenCaLamViec().toLowerCase().contains("sáng"))));
+
+                if (!isClearMorning) {
+                    System.out.println("🌆 [Ca Chiều] Lấy bản ghi duy nhất (không phải ca sáng rõ ràng): " +
+                            (onlyRecord.getCaLamViec() != null ? onlyRecord.getCaLamViec().getTenCaLamViec() : "N/A"));
+                    return onlyRecord;
+                }
+            }
+
+            System.out.println("🌆 [Ca Chiều] Không tìm thấy bản ghi phù hợp");
+            return null;
+        }
+
+        return null;
+    }
+
+    /**
+     * *** THÊM METHOD MỚI: Kiểm tra bản ghi có phải ca sáng theo thời gian ***
+     */
+    private boolean isMorningRecord(ChamCong chamCong) {
+        try {
+            String timeStr = chamCong.getThoiGianCheckIn().toString();
+            if (timeStr.contains(" ")) {
+                String timePart = timeStr.split(" ")[1];
+                if (timePart != null && timePart.contains(":")) {
+                    int hour = Integer.parseInt(timePart.split(":")[0]);
+                    return hour < 12; // Trước 12h trưa = ca sáng
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi parse thời gian: " + e.getMessage());
+        }
+        return false; // Mặc định không phải ca sáng
     }
 
     // *** THÊM HELPER METHOD MỚI để xác định ca chiều ***
