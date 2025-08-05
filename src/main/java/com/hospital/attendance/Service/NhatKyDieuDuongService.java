@@ -612,6 +612,9 @@ public class NhatKyDieuDuongService {
                     ", không thể phục hồi. Vui lòng xóa nhật ký hiện tại trước.");
         }
 
+
+
+
         // Phục hồi
         nhatKy.setTrangThai(1);
         nhatKy.setNguoiCapNhat(tenDangNhap);
