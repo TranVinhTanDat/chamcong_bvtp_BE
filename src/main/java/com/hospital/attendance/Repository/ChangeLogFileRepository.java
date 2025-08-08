@@ -16,9 +16,13 @@ public interface ChangeLogFileRepository extends JpaRepository<ChangeLogFile, Lo
     // Lấy danh sách file theo thư mục cha
     List<ChangeLogFile> findByThuMucChaOrderByVersionFileDesc(String thuMucCha);
 
-    // Lấy version mới nhất của file trong thư mục
+    // Lấy version mới nhất của file trong thư mục (method cũ - giữ lại cho backward compatibility)
     @Query("SELECT MAX(f.versionFile) FROM ChangeLogFile f WHERE f.thuMucCha = :thuMucCha")
     Optional<String> findLatestVersionByThuMucCha(@Param("thuMucCha") String thuMucCha);
+
+    // THÊM METHOD MỚI: Lấy version mới nhất của file có cùng tên trong thư mục
+    @Query("SELECT MAX(f.versionFile) FROM ChangeLogFile f WHERE f.thuMucCha = :thuMucCha AND f.tenFileGoc = :tenFileGoc")
+    Optional<String> findLatestVersionByThuMucChaAndTenFileGoc(@Param("thuMucCha") String thuMucCha, @Param("tenFileGoc") String tenFileGoc);
 
     // Kiểm tra file đã tồn tại
     boolean existsByTenFileGocAndThuMucChaAndVersionFile(String tenFileGoc, String thuMucCha, String versionFile);
@@ -32,4 +36,7 @@ public interface ChangeLogFileRepository extends JpaRepository<ChangeLogFile, Lo
     // Lấy danh sách thư mục đã có
     @Query("SELECT DISTINCT f.thuMucCha FROM ChangeLogFile f ORDER BY f.thuMucCha")
     List<String> findDistinctThuMucCha();
+
+    // THÊM METHOD MỚI: Lấy danh sách file cùng tên trong thư mục
+    List<ChangeLogFile> findByThuMucChaAndTenFileGocOrderByVersionFileDesc(String thuMucCha, String tenFileGoc);
 }

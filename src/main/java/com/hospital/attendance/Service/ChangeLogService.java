@@ -131,7 +131,8 @@ public class ChangeLogService {
         changeLog.setNguoiTao(nguoiTao);
 
         if (changeLog.getVersion() == null || changeLog.getVersion().isEmpty()) {
-            changeLog.setVersion(generateNextVersion());
+            // SỬA CHỖ NÀY: Truyền tiêu đề để check trùng
+            changeLog.setVersion(generateNextVersion(changeLog.getTieuDe()));
         }
 
         return changeLogRepository.save(changeLog);
@@ -170,10 +171,12 @@ public class ChangeLogService {
             folder.mkdirs();
         }
 
-        String newVersion = generateNextFileVersion(thuMucCha);
         String originalFileName = file.getOriginalFilename();
         String fileExtension = getFileExtension(originalFileName);
         String baseFileName = getBaseFileName(originalFileName);
+
+        // SỬA CHỖ NÀY: Truyền thêm tên file gốc để kiểm tra trùng
+        String newVersion = generateNextFileVersion(thuMucCha, originalFileName);
         String newFileName = baseFileName + "_v" + newVersion + "." + fileExtension;
 
         Path filePath = Paths.get(folderPath, newFileName);
@@ -255,8 +258,10 @@ public class ChangeLogService {
         return stats;
     }
 
-    private String generateNextVersion() {
-        Optional<String> latestVersion = changeLogRepository.findLatestVersion();
+    private String generateNextVersion(String tieuDe) {
+        // Lấy version cao nhất của ChangeLog có cùng tiêu đề
+        Optional<String> latestVersion = changeLogRepository.findLatestVersionByTieuDe(tieuDe);
+
         if (latestVersion.isPresent()) {
             try {
                 String version = latestVersion.get(); // "1.5"
@@ -272,14 +277,23 @@ public class ChangeLogService {
                     return new DecimalFormat("0.0").format(versionNum + 0.1);
                 }
             } catch (NumberFormatException e) {
-                return "1.0";
+                return "1.1"; // Nếu có lỗi parse, tạo version 1.1
             }
         }
+
+        // Nếu chưa có ChangeLog nào với tiêu đề này
         return "1.0";
     }
 
-    private String generateNextFileVersion(String thuMucCha) {
-        Optional<String> latestVersion = changeLogFileRepository.findLatestVersionByThuMucCha(thuMucCha);
+    /**
+     * Tạo version mới cho file dựa trên tên file gốc và thư mục
+     * - Nếu chưa có file nào với tên này trong thư mục: version = "1.0"
+     * - Nếu đã có file trùng tên: tăng version lên (1.1, 1.2, ...)
+     */
+    private String generateNextFileVersion(String thuMucCha, String tenFileGoc) {
+        // Lấy version cao nhất của file có cùng tên trong thư mục
+        Optional<String> latestVersion = changeLogFileRepository.findLatestVersionByThuMucChaAndTenFileGoc(thuMucCha, tenFileGoc);
+
         if (latestVersion.isPresent()) {
             try {
                 String version = latestVersion.get(); // "1.5"
@@ -295,9 +309,11 @@ public class ChangeLogService {
                     return new DecimalFormat("0.0").format(versionNum + 0.1);
                 }
             } catch (NumberFormatException e) {
-                return "1.0";
+                return "1.1"; // Nếu có lỗi parse, tạo version 1.1
             }
         }
+
+        // Nếu chưa có file nào với tên này trong thư mục
         return "1.0";
     }
 

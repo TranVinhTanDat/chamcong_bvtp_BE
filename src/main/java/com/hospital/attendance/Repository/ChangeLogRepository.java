@@ -53,4 +53,8 @@ public interface ChangeLogRepository extends JpaRepository<ChangeLog, Long> {
     // Thống kê theo trạng thái
     @Query("SELECT c.trangThai, COUNT(c) FROM ChangeLog c GROUP BY c.trangThai")
     List<Object[]> getStatisticsByTrangThai();
+
+    // THÊM method này vào ChangeLogRepository.java
+    @Query("SELECT MAX(c.version) FROM ChangeLog c WHERE c.tieuDe = :tieuDe")
+    Optional<String> findLatestVersionByTieuDe(@Param("tieuDe") String tieuDe);
 }
