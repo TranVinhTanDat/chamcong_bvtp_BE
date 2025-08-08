@@ -332,7 +332,7 @@ public class NhatKyDieuDuongExportService {
         // Row 1: BỆNH VIỆN QUẬN TÂN PHÚ | Độc lập - Tự do - Hạnh phúc
         Row row1 = sheet.createRow(startRow + 1);
         Cell cell1_0 = row1.createCell(0);
-        cell1_0.setCellValue("BỆNH VIỆN QUẬN TÂN PHÚ");
+        cell1_0.setCellValue("BỆNH VIỆN ĐA KHOA TÂN PHÚ");
         cell1_0.setCellStyle(leftTitleStyle);
 
         Cell cell1_1 = row1.createCell(25);
