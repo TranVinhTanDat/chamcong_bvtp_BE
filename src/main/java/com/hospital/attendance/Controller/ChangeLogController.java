@@ -317,4 +317,5 @@ public class ChangeLogController {
             return ResponseEntity.badRequest().body("Lỗi khi lấy enum values: " + e.getMessage());
         }
     }
+
 }
