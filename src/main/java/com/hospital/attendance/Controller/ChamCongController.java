@@ -476,4 +476,178 @@ public class ChamCongController {
                     .body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
         }
     }
+
+
+    @PostMapping("/checkin-range")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    public ResponseEntity<?> checkInRange(
+            @RequestHeader("Authorization") String token,
+            @RequestBody Map<String, Object> request) {
+
+        String tenDangNhap = jwtService.extractUsername(token.substring(7));
+
+        // Parse parameters
+        String nhanVienId = (String) request.get("nhanVienId");
+        String nhanVienHoTen = (String) request.get("nhanVienHoTen");
+        String emailNhanVien = (String) request.get("emailNhanVien");
+        String tuNgay = (String) request.get("tuNgay"); // Format: dd-MM-yyyy
+        String denNgay = (String) request.get("denNgay"); // Format: dd-MM-yyyy
+        String trangThai = (String) request.get("trangThai");
+        String caLamViecId = (String) request.get("caLamViecId");
+        String maKyHieuChamCong = (String) request.get("maKyHieuChamCong");
+        String ghiChu = (String) request.get("ghiChu");
+
+        // Parse danh sách ca làm việc cho từng ngày
+        @SuppressWarnings("unchecked")
+        List<Integer> shifts = (List<Integer>) request.get("shifts"); // [1, 2] hoặc [1] hoặc [2]
+
+        // Validation
+        if (nhanVienId == null && nhanVienHoTen == null && emailNhanVien == null) {
+            return ResponseEntity.badRequest()
+                    .body("{\"error\": \"Thiếu thông tin nhân viên (nhanVienId, nhanVienHoTen, hoặc emailNhanVien)\"}");
+        }
+
+        if (tuNgay == null || tuNgay.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body("{\"error\": \"Phải cung cấp tuNgay (định dạng dd-MM-yyyy)\"}");
+        }
+
+        if (denNgay == null || denNgay.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body("{\"error\": \"Phải cung cấp denNgay (định dạng dd-MM-yyyy)\"}");
+        }
+
+        if (trangThai == null || (!trangThai.equals("LÀM") && !trangThai.equals("NGHỈ"))) {
+            return ResponseEntity.badRequest()
+                    .body("{\"error\": \"Trạng thái phải là LÀM hoặc NGHỈ\"}");
+        }
+
+        if (caLamViecId == null) {
+            return ResponseEntity.badRequest()
+                    .body("{\"error\": \"Phải cung cấp caLamViecId\"}");
+        }
+
+        if (trangThai.equals("NGHỈ") && maKyHieuChamCong == null) {
+            return ResponseEntity.badRequest()
+                    .body("{\"error\": \"Phải cung cấp maKyHieuChamCong khi trạng thái là NGHỈ\"}");
+        }
+
+        if (shifts == null || shifts.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body("{\"error\": \"Phải cung cấp danh sách ca (shifts): [1] cho ca sáng, [2] cho ca chiều, [1,2] cho cả hai ca\"}");
+        }
+
+        // Validate shifts
+        for (Integer shift : shifts) {
+            if (shift != 1 && shift != 2) {
+                return ResponseEntity.badRequest()
+                        .body("{\"error\": \"Ca phải là 1 (sáng) hoặc 2 (chiều)\"}");
+            }
+        }
+
+        try {
+            Map<String, Object> result = chamCongService.checkInRange(
+                    tenDangNhap, nhanVienId, nhanVienHoTen, emailNhanVien,
+                    tuNgay, denNgay, trangThai, shifts, caLamViecId,
+                    maKyHieuChamCong, ghiChu
+            );
+            return ResponseEntity.ok(result);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest()
+                    .body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
+        }
+    }
+
+
+    // Thêm vào ChamCongController.java
+
+    @PostMapping("/checkin-monthly")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG', 'NGUOITONGHOP')")
+    public ResponseEntity<?> checkInMonthly(
+            @RequestHeader("Authorization") String token,
+            @RequestBody Map<String, Object> request) {
+
+        String tenDangNhap = jwtService.extractUsername(token.substring(7));
+
+        // Parse parameters
+        Long khoaPhongId = request.get("khoaPhongId") != null ?
+                Long.parseLong(request.get("khoaPhongId").toString()) : null;
+        Integer year = request.get("year") != null ?
+                Integer.parseInt(request.get("year").toString()) : null;
+        Integer month = request.get("month") != null ?
+                Integer.parseInt(request.get("month").toString()) : null;
+
+        // Validation
+        if (khoaPhongId == null) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Phải chọn khoa phòng\"}");
+        }
+        if (year == null || year < 2020 || year > 2030) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Năm không hợp lệ (2020-2030)\"}");
+        }
+        if (month == null || month < 1 || month > 12) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Tháng không hợp lệ (1-12)\"}");
+        }
+
+        try {
+            Map<String, Object> result = chamCongService.checkInMonthly(
+                    tenDangNhap, khoaPhongId, year, month
+            );
+            return ResponseEntity.ok(result);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
+        }
+    }
+
+    @DeleteMapping("/delete-monthly")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOICHAMCONG')")
+    public ResponseEntity<?> deleteMonthly(
+            @RequestHeader("Authorization") String token,
+            @RequestBody Map<String, Object> request) {
+
+        String tenDangNhap = jwtService.extractUsername(token.substring(7));
+
+        // Parse parameters
+        Long khoaPhongId = request.get("khoaPhongId") != null ?
+                Long.parseLong(request.get("khoaPhongId").toString()) : null;
+        Integer year = request.get("year") != null ?
+                Integer.parseInt(request.get("year").toString()) : null;
+        Integer month = request.get("month") != null ?
+                Integer.parseInt(request.get("month").toString()) : null;
+
+        // Validation
+        if (khoaPhongId == null) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Phải chọn khoa phòng\"}");
+        }
+        if (year == null || year < 2020 || year > 2030) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Năm không hợp lệ (2020-2030)\"}");
+        }
+        if (month == null || month < 1 || month > 12) {
+            return ResponseEntity.badRequest().body("{\"error\": \"Tháng không hợp lệ (1-12)\"}");
+        }
+
+        try {
+            Map<String, Object> result = chamCongService.deleteMonthly(
+                    tenDangNhap, khoaPhongId, year, month
+            );
+            return ResponseEntity.ok(result);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"Lỗi hệ thống: " + e.getMessage() + "\"}");
+        }
+    }
 }

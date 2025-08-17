@@ -66,6 +66,12 @@ public class SecurityConfig {
                         // Chấm công cơ bản - Tất cả roles (bao gồm NGUOITONGHOP_1KP)
                         .requestMatchers("/chamcong/checkin").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP", "NGUOITONGHOP_1KP")
                         .requestMatchers("/chamcong/checkin-bulk").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP", "NGUOITONGHOP_1KP")
+                        .requestMatchers("/chamcong/checkin-range").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP") // THÊM DÒNG NÀY
+
+                        // THÊM MỚI: Chấm công/xóa cả tháng
+                        .requestMatchers("/chamcong/checkin-monthly").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP")
+                        .requestMatchers("/chamcong/delete-monthly").hasAnyRole("ADMIN", "NGUOICHAMCONG")
+
                         .requestMatchers("/chamcong/lichsu").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP", "NGUOITONGHOP_1KP")
                         .requestMatchers("/chamcong/trangthai-ngay").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP", "NGUOITONGHOP_1KP")
                         .requestMatchers("/chamcong/chitiet-homnay").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP", "NGUOITONGHOP_1KP")
@@ -146,6 +152,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/change-log/files/{fileId}/download").hasAnyRole("ADMIN", "NGUOIDIENTHAYDOI")
                         .requestMatchers(HttpMethod.DELETE, "/change-log/files/{fileId}").hasAnyRole("ADMIN", "NGUOIDIENTHAYDOI")
 
+                                // ========== MỞ KHÓA CHẤM CÔNG APIs ==========
+                                // Tạo và hủy mở khóa - Chỉ ADMIN
+                                .requestMatchers(HttpMethod.POST, "/mo-khoa-cham-cong").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/mo-khoa-cham-cong/{id}/huy").hasRole("ADMIN")
+
+                                // Xem danh sách và kiểm tra - ADMIN và NGUOICHAMCONG
+                                .requestMatchers(HttpMethod.GET, "/mo-khoa-cham-cong").hasAnyRole("ADMIN", "NGUOICHAMCONG")
+                                .requestMatchers(HttpMethod.GET, "/mo-khoa-cham-cong/{id}").hasAnyRole("ADMIN", "NGUOICHAMCONG")
+                                .requestMatchers(HttpMethod.GET, "/mo-khoa-cham-cong/kiem-tra").hasAnyRole("ADMIN", "NGUOICHAMCONG")
+                        .requestMatchers(HttpMethod.GET, "/mo-khoa-cham-cong/khoa-phong/{khoaPhongId}/hien-tai").hasAnyRole("ADMIN", "NGUOICHAMCONG")
+                        .requestMatchers(HttpMethod.PUT, "/mo-khoa-cham-cong/{id}/gia-han").hasRole("ADMIN")
                         // ========== USER MANAGEMENT APIs ==========
                         // Profile cá nhân - Tất cả roles (bao gồm NGUOITONGHOP_1KP)
                         .requestMatchers("/user/current").hasAnyRole("ADMIN", "NGUOICHAMCONG", "NGUOITONGHOP", "NGUOITONGHOP_1KP","NGUOIDIENNHATKYDD","NGUOIDIENTHAYDOI")
