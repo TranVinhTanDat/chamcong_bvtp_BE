@@ -48,6 +48,20 @@ public class ChamCongController {
         String ghiChu = request.get("ghiChu");
         String filterDate = request.get("filterDate");
 
+        // *** THÊM MỚI: Nhận shift từ Frontend ***
+        String shiftStr = request.get("shift");
+        Integer shift = null;
+        if (shiftStr != null) {
+            try {
+                shift = Integer.parseInt(shiftStr);
+                if (shift != 1 && shift != 2) {
+                    shift = null; // Ignore invalid shift
+                }
+            } catch (NumberFormatException e) {
+                shift = null; // Ignore invalid shift
+            }
+        }
+
         if (nhanVienId == null && nhanVienHoTen == null && emailNhanVien == null) {
             return ResponseEntity.badRequest().body("{\"error\": \"Thiếu thông tin nhân viên (nhanVienId, nhanVienHoTen, hoặc emailNhanVien)\"}");
         }
@@ -70,7 +84,7 @@ public class ChamCongController {
 
         try {
             ChamCong chamCong = chamCongService.checkIn(tenDangNhap, nhanVienId, nhanVienHoTen, emailNhanVien,
-                    trangThai, caLamViecId, maKyHieuChamCong, ghiChu, filterDate);
+                    trangThai, caLamViecId, maKyHieuChamCong, ghiChu, filterDate, shift);
             return ResponseEntity.ok("{\"message\": \"Check-in thành công\"}");
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");

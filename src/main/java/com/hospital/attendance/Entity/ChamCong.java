@@ -41,4 +41,7 @@
 
         @Column(name = "ghi_chu")
         private String ghiChu;
+
+        @Column(name = "shift")
+        private Integer shift;
     }

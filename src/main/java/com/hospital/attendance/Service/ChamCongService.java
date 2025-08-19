@@ -64,7 +64,7 @@ public class ChamCongService {
      * UPDATED: Loại bỏ kiểm tra trùng ca làm việc - Cho phép chấm công cùng ca nhiều lần
      */
     public ChamCong checkIn(String tenDangNhapChamCong, String nhanVienId, String nhanVienHoTen, String emailNhanVien,
-                            String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu, String filterDate) {
+                            String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu, String filterDate, Integer shift) {
 
         // 1. Kiểm tra quyền người chấm công
         User chamCongUser = userRepository.findByTenDangNhap(tenDangNhapChamCong)
@@ -118,12 +118,19 @@ public class ChamCongService {
             throw new IllegalStateException(thongBao.toString());
         }
 
-        // 6. *** REMOVED: Kiểm tra trùng lặp ca cụ thể ***
-        // Đã loại bỏ hoàn toàn logic kiểm tra trùng ca làm việc
-        // Cho phép nhân viên chấm công nhiều lần với cùng một ca trong ngày
+        // 6. *** THÊM MỚI: Kiểm tra trùng shift trong ngày (nếu có shift) ***
+        if (shift != null) {
+            List<ChamCong> existingRecords = chamCongRepository.findByNhanVienAndDateRange(nhanVien, startOfDay, endOfDay);
+            for (ChamCong existing : existingRecords) {
+                if (shift.equals(existing.getShift())) {
+                    String caName = shift == 1 ? "sáng" : "chiều";
+                    throw new IllegalStateException("Nhân viên đã chấm công ca " + caName + " trong ngày này");
+                }
+            }
+        }
 
-        // 7. Tạo bản ghi chấm công mới với thời gian hiện tại hoặc thời gian được chỉ định
-        return taoMoiBanGhiChamCong(nhanVien, trangThai, caLamViecId, maKyHieuChamCong, ghiChu, filterDate);
+        // 7. Tạo bản ghi chấm công mới với shift
+        return taoMoiBanGhiChamCong(nhanVien, trangThai, caLamViecId, maKyHieuChamCong, ghiChu, filterDate, shift);
     }
 
     /**
@@ -216,23 +223,39 @@ public class ChamCongService {
     }
 
     // CẬP NHẬT method taoMoiBanGhiChamCong trong ChamCongService
-    private ChamCong taoMoiBanGhiChamCong(NhanVien nhanVien, String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu, String filterDate) {
+    private ChamCong taoMoiBanGhiChamCong(NhanVien nhanVien, String trangThai, String caLamViecId, String maKyHieuChamCong, String ghiChu, String filterDate, Integer shift) {
         ChamCong chamCong = new ChamCong();
         chamCong.setNhanVien(nhanVien);
+
+        // *** THÊM MỚI: Lưu shift ***
+        chamCong.setShift(shift);
 
         // Nếu có filterDate, set thời gian theo ngày đó, nếu không thì dùng thời gian hiện tại
         if (filterDate != null && !filterDate.isEmpty()) {
             try {
                 SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
                 Date filterDateParsed = sdf.parse(filterDate);
-                // Set thời gian hiện tại nhưng ngày theo filter
                 Calendar cal = Calendar.getInstance();
-                Calendar filterCal = Calendar.getInstance();
-                filterCal.setTime(filterDateParsed);
+                cal.setTime(filterDateParsed);
 
-                cal.set(Calendar.YEAR, filterCal.get(Calendar.YEAR));
-                cal.set(Calendar.MONTH, filterCal.get(Calendar.MONTH));
-                cal.set(Calendar.DAY_OF_MONTH, filterCal.get(Calendar.DAY_OF_MONTH));
+                // *** THÊM MỚI: SET THỜI GIAN DỰA TRÊN SHIFT ***
+                if (shift != null) {
+                    if (shift == 1) {
+                        cal.set(Calendar.HOUR_OF_DAY, 7);  // Ca sáng: 7:00 AM
+                        cal.set(Calendar.MINUTE, 0);
+                    } else if (shift == 2) {
+                        cal.set(Calendar.HOUR_OF_DAY, 13); // Ca chiều: 1:00 PM
+                        cal.set(Calendar.MINUTE, 0);
+                    }
+                    cal.set(Calendar.SECOND, 0);
+                    cal.set(Calendar.MILLISECOND, 0);
+                } else {
+                    // Fallback: Dùng thời gian hiện tại nhưng với ngày từ filter
+                    Calendar currentTime = Calendar.getInstance();
+                    cal.set(Calendar.HOUR_OF_DAY, currentTime.get(Calendar.HOUR_OF_DAY));
+                    cal.set(Calendar.MINUTE, currentTime.get(Calendar.MINUTE));
+                    cal.set(Calendar.SECOND, currentTime.get(Calendar.SECOND));
+                }
 
                 chamCong.setThoiGianCheckIn(cal.getTime());
             } catch (ParseException e) {
@@ -500,26 +523,22 @@ public class ChamCongService {
                     continue;
                 }
 
-                // Kiểm tra xem shift này đã được chấm công chưa bằng cách đếm số lần chấm công
+                // *** SỬA ĐỔI: Kiểm tra trùng shift thay vì theo thứ tự ***
                 List<ChamCong> danhSachChamCongTrongNgay = chamCongRepository.findByNhanVienAndDateRange(
                         nhanVien, startOfDay, endOfDay);
 
-                // Nếu shift = 1 và đã có bản ghi nào, hoặc shift = 2 và đã có >= 2 bản ghi thì skip
-                if ((shift == 1 && !danhSachChamCongTrongNgay.isEmpty()) ||
-                        (shift == 2 && danhSachChamCongTrongNgay.size() >= 2)) {
+                // Kiểm tra xem shift này đã được chấm công chưa
+                boolean shiftExists = danhSachChamCongTrongNgay.stream()
+                        .anyMatch(cc -> shift.equals(cc.getShift()));
+
+                if (shiftExists) {
                     thatBai.add(nhanVien.getHoTen() + " - Đã chấm công cho ca " + (shift == 1 ? "sáng" : "chiều"));
                     continue;
                 }
 
-                // Nếu shift = 2 nhưng chưa có shift 1, bắt buộc phải chấm shift 1 trước
-                if (shift == 2 && danhSachChamCongTrongNgay.isEmpty()) {
-                    thatBai.add(nhanVien.getHoTen() + " - Phải chấm công ca sáng trước khi chấm ca chiều");
-                    continue;
-                }
-
-                // Tạo bản ghi chấm công
+                // *** SỬA ĐỔI: Truyền thêm tham số shift vào method taoMoiBanGhiChamCong ***
                 ChamCong chamCong = taoMoiBanGhiChamCong(nhanVien, trangThai, caLamViecId,
-                        maKyHieuChamCong, ghiChu, filterDate);
+                        maKyHieuChamCong, ghiChu, filterDate, shift);
 
                 thanhCong.add(nhanVien.getHoTen() + " - " + trangThai + " ca " + (shift == 1 ? "sáng" : "chiều"));
 
