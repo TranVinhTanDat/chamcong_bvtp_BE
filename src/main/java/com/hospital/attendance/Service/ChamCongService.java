@@ -55,7 +55,8 @@ public class ChamCongService {
         sevenDaysAgo.set(Calendar.SECOND, 0);
         sevenDaysAgo.set(Calendar.MILLISECOND, 0);
 
-        return checkDate.after(sevenDaysAgo.getTime()) && !checkDate.after(today.getTime());
+        // CHỈ KIỂM TRA >= sevenDaysAgo, BỎ ĐIỀU KIỆN <= today
+        return checkDate.after(sevenDaysAgo.getTime()); // Cho phép tương lai vô hạn
     }
 
 
