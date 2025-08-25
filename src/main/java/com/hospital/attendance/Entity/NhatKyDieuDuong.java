@@ -457,15 +457,13 @@ public class NhatKyDieuDuong {
     @Column(name = "nguoi_tao", nullable = false)
     private String nguoiTao;
 
-    @Column(name = "ngay_tao", nullable = false)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime ngayTao;
 
     @Column(name = "nguoi_cap_nhat")
     private String nguoiCapNhat;
 
-    @Column(name = "ngay_cap_nhat")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime ngayCapNhat;
 
     @Column(name = "trang_thai", nullable = false)
