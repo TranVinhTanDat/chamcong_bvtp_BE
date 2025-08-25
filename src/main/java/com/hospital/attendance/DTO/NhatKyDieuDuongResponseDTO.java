@@ -161,12 +161,12 @@ public class NhatKyDieuDuongResponseDTO {
     private String ghiChu;
     private String nguoiTao;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     private LocalDateTime ngayTao;
 
     private String nguoiCapNhat;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
     private LocalDateTime ngayCapNhat;
 
     private Integer trangThai;
