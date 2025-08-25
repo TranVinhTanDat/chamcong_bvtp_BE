@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Date;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -82,7 +83,7 @@ public class NhatKyDieuDuongService {
             // Cập nhật với dữ liệu mới
             updateNhatKyFields(existing, nhatKyDieuDuong);
             existing.setNguoiCapNhat(tenDangNhap);
-            existing.setNgayCapNhat(LocalDateTime.now());
+            existing.setNgayCapNhat(new Date());
             existing.setGhiChu(nhatKyDieuDuong.getGhiChu());
 
             return nhatKyDieuDuongRepository.save(existing);
@@ -96,7 +97,7 @@ public class NhatKyDieuDuongService {
         // Set thông tin khoa phòng và metadata
         nhatKyDieuDuong.setKhoaPhong(khoaPhongRepository.findById(khoaPhongId).get());
         nhatKyDieuDuong.setNguoiTao(tenDangNhap);
-        nhatKyDieuDuong.setNgayTao(LocalDateTime.now());
+        nhatKyDieuDuong.setNgayTao(new Date());
         nhatKyDieuDuong.setTrangThai(1);
 
         // Validate dữ liệu theo loại mẫu
@@ -145,7 +146,7 @@ public class NhatKyDieuDuongService {
 
         // Cập nhật metadata
         existingNhatKy.setNguoiCapNhat(tenDangNhap);
-        existingNhatKy.setNgayCapNhat(LocalDateTime.now());
+        existingNhatKy.setNgayCapNhat(new Date());
         existingNhatKy.setGhiChu(nhatKyDetails.getGhiChu());
 
         logger.info("Updating NhatKyDieuDuong in database");
@@ -235,7 +236,7 @@ public class NhatKyDieuDuongService {
 
         nhatKy.setTrangThai(0);
         nhatKy.setNguoiCapNhat(tenDangNhap);
-        nhatKy.setNgayCapNhat(LocalDateTime.now());
+        nhatKy.setNgayCapNhat(new Date());
         nhatKyDieuDuongRepository.save(nhatKy);
 
         logger.info("✅ Soft deleted NhatKyDieuDuong successfully by {} ({})", tenDangNhap, userRole);
@@ -550,7 +551,7 @@ public class NhatKyDieuDuongService {
             NhatKyDieuDuong restoredRecord = deletedRecord.get();
             restoredRecord.setTrangThai(1);
             restoredRecord.setNguoiCapNhat(tenDangNhap);
-            restoredRecord.setNgayCapNhat(LocalDateTime.now());
+            restoredRecord.setNgayCapNhat(new Date());
 
             NhatKyDieuDuong saved = nhatKyDieuDuongRepository.save(restoredRecord);
             logger.info("✅ Successfully restored record with ID: {}", saved.getId());
@@ -618,7 +619,7 @@ public class NhatKyDieuDuongService {
         // Phục hồi
         nhatKy.setTrangThai(1);
         nhatKy.setNguoiCapNhat(tenDangNhap);
-        nhatKy.setNgayCapNhat(LocalDateTime.now());
+        nhatKy.setNgayCapNhat(new Date());
 
         NhatKyDieuDuong restored = nhatKyDieuDuongRepository.save(nhatKy);
         logger.info("✅ Successfully restored NhatKyDieuDuong with ID: {} by {} ({})",

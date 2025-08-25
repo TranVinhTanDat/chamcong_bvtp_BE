@@ -3,6 +3,7 @@ package com.hospital.attendance.DTO;
 import com.hospital.attendance.Entity.NhatKyDieuDuong.LoaiMauNhatKy;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import java.util.Date;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -161,13 +162,13 @@ public class NhatKyDieuDuongResponseDTO {
     private String ghiChu;
     private String nguoiTao;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
-    private LocalDateTime ngayTao;
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
+    private Date ngayTao;
 
     private String nguoiCapNhat;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
-    private LocalDateTime ngayCapNhat;
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
+    private Date ngayCapNhat;
 
     private Integer trangThai;
 

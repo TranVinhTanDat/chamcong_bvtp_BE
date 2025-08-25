@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;
+import java.util.Date;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -457,14 +458,18 @@ public class NhatKyDieuDuong {
     @Column(name = "nguoi_tao", nullable = false)
     private String nguoiTao;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
-    private LocalDateTime ngayTao;
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "ngay_tao", nullable = false)
+    private Date ngayTao;
 
     @Column(name = "nguoi_cap_nhat")
     private String nguoiCapNhat;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
-    private LocalDateTime ngayCapNhat;
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss", timezone = "Asia/Ho_Chi_Minh")
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "ngay_cap_nhat")
+    private Date ngayCapNhat;
 
     @Column(name = "trang_thai", nullable = false)
     private Integer trangThai = 1; // 1: Active, 0: Inactive
@@ -492,7 +497,7 @@ public class NhatKyDieuDuong {
 
     @PrePersist
     protected void onCreate() {
-        ngayTao = LocalDateTime.now();
+        ngayTao = new Date();  // Thay LocalDateTime.now() thành new Date()
         if (trangThai == null) {
             trangThai = 1;
         }
@@ -500,6 +505,6 @@ public class NhatKyDieuDuong {
 
     @PreUpdate
     protected void onUpdate() {
-        ngayCapNhat = LocalDateTime.now();
+        ngayCapNhat = new Date();  // Thay LocalDateTime.now() thành new Date()
     }
 }
