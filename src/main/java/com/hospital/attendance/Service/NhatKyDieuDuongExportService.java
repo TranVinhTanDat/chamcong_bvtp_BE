@@ -576,13 +576,56 @@ public class NhatKyDieuDuongExportService {
     }
 
     /**
+     * ✅ Tạo style cho các dòng trống (không có dữ liệu) với màu nền khác
+     */
+    private CellStyle createEmptyRowStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setFontName("Times New Roman");
+        font.setFontHeightInPoints((short) 10);
+        style.setFont(font);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+
+        // Borders như bình thường
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+
+        // ✅ MÀU NỀN NHẸ NHÀNG ĐỂ PHÂN BIỆT DÒNG TRỐNG (CHỌN 1 TRONG CÁC OPTION SAU)
+
+        // OPTION 1: Màu xám nhẹ (khuyên dùng - dễ nhìn nhất)
+        style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+
+        // OPTION 2: Màu kem/vàng nhạt (ấm áp, thân thiện)
+        // style.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
+
+        // OPTION 3: Màu xanh lá nhạt (tươi mát nhưng không chói)
+        // style.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+
+        // OPTION 4: Màu hồng nhạt (dịu nhẹ)
+        // style.setFillForegroundColor(IndexedColors.ROSE.getIndex());
+
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        return style;
+    }
+
+    /**
      * Tạo data row cải tiến cho mẫu 1
      */
     private void createMau1DataRowImproved(Sheet sheet, int rowNum, int day, NhatKyDieuDuong nhatKy, CellStyle dataStyle) {
         Row row = sheet.createRow(rowNum);
         int colNum = 0;
 
-        // Ngày
+        // ✅ TẠO STYLE CHO DÒNG TRỐNG NỂU KHÔNG CÓ DỮ LIỆU
+        CellStyle styleToUse = dataStyle;
+        if (nhatKy == null) {
+            styleToUse = createEmptyRowStyle(sheet.getWorkbook());
+        }
+
+        // Ngày - luôn dùng style bình thường
         Cell dateCell = row.createCell(colNum++);
         dateCell.setCellValue(day);
         dateCell.setCellStyle(dataStyle);
@@ -647,9 +690,11 @@ public class NhatKyDieuDuongExportService {
             setCellValue(row, colNum++, nhatKy.getTongNbDoDienCo(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getTongNbDoChucNangHoHap(), dataStyle);
         } else {
-            // Không có dữ liệu - fill empty cells với giá trị 0 hoặc ""
+            // ✅ KHÔNG CÓ DỮ LIỆU - FILL CÁC CELL VỚI GIÁ TRỊ 0 VÀ STYLE MÀU KHÁC
             for (int i = 1; i < 48; i++) { // 47 columns + date column
-                setCellValue(row, colNum++, null, dataStyle);
+                Cell cell = row.createCell(colNum++);
+                cell.setCellValue(0); // ✅ ĐẶT GIÁ TRỊ 0 THAY VÌ TRỐNG
+                cell.setCellStyle(styleToUse); // ✅ SỬ DỤNG STYLE CÓ MÀU NỀN
             }
         }
     }
@@ -661,7 +706,13 @@ public class NhatKyDieuDuongExportService {
         Row row = sheet.createRow(rowNum);
         int colNum = 0;
 
-        // Ngày
+        // ✅ TẠO STYLE CHO DÒNG TRỐNG NỂU KHÔNG CÓ DỮ LIỆU
+        CellStyle styleToUse = dataStyle;
+        if (nhatKy == null) {
+            styleToUse = createEmptyRowStyle(sheet.getWorkbook());
+        }
+
+        // Ngày - luôn dùng style bình thường
         Cell dateCell = row.createCell(colNum++);
         dateCell.setCellValue(day);
         dateCell.setCellStyle(dataStyle);
@@ -708,9 +759,11 @@ public class NhatKyDieuDuongExportService {
             setCellValue(row, colNum++, nhatKy.getSvKtv(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getSvDuoc(), dataStyle);
         } else {
-            // Không có dữ liệu - fill empty cells
+            // ✅ KHÔNG CÓ DỮ LIỆU - FILL CÁC CELL VỚI GIÁ TRỊ 0 VÀ STYLE MÀU KHÁC
             for (int i = 1; i < 34; i++) { // 33 columns + date column
-                setCellValue(row, colNum++, null, dataStyle);
+                Cell cell = row.createCell(colNum++);
+                cell.setCellValue(0); // ✅ ĐẶT GIÁ TRỊ 0 THAY VÌ TRỐNG
+                cell.setCellStyle(styleToUse); // ✅ SỬ DỤNG STYLE CÓ MÀU NỀN
             }
         }
     }
@@ -1585,7 +1638,13 @@ public class NhatKyDieuDuongExportService {
         Row row = sheet.createRow(rowNum);
         int colNum = 0;
 
-        // Ngày
+        // ✅ TẠO STYLE CHO DÒNG TRỐNG NỂU KHÔNG CÓ DỮ LIỆU
+        CellStyle styleToUse = dataStyle;
+        if (nhatKy == null) {
+            styleToUse = createEmptyRowStyle(sheet.getWorkbook());
+        }
+
+        // Ngày - luôn dùng style bình thường
         Cell dateCell = row.createCell(colNum++);
         dateCell.setCellValue(day);
         dateCell.setCellStyle(dataStyle);
@@ -1613,9 +1672,11 @@ public class NhatKyDieuDuongExportService {
             setCellValue(row, colNum++, nhatKy.getCdhaSATongNb(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getCdhaSATongSo(), dataStyle);
         } else {
-            // Không có dữ liệu
+            // ✅ KHÔNG CÓ DỮ LIỆU - FILL CÁC CELL VỚI GIÁ TRỊ 0 VÀ STYLE MÀU KHÁC
             for (int i = 1; i < 19; i++) { // 18 columns + date column
-                setCellValue(row, colNum++, null, dataStyle);
+                Cell cell = row.createCell(colNum++);
+                cell.setCellValue(0); // ✅ ĐẶT GIÁ TRỊ 0 THAY VÌ TRỐNG
+                cell.setCellStyle(styleToUse); // ✅ SỬ DỤNG STYLE CÓ MÀU NỀN
             }
         }
     }
