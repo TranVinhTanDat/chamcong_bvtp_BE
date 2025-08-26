@@ -109,7 +109,7 @@ public class NhatKyDieuDuongController {
      * Lấy danh sách nhật ký với phân trang và filter - FIXED
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOIDIENNHATKYDD')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOIDIENNHATKYDD', 'NGUOITONGHOP_NHATKYDD')")
     public ResponseEntity<Page<NhatKyDieuDuongResponseDTO>> getNhatKyDieuDuong(
             @RequestHeader("Authorization") String token,
             @RequestParam(defaultValue = "0") int page,
@@ -146,7 +146,7 @@ public class NhatKyDieuDuongController {
      * Lấy nhật ký theo ID - FIXED
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOIDIENNHATKYDD')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOIDIENNHATKYDD', 'NGUOITONGHOP_NHATKYDD')")
     public ResponseEntity<NhatKyDieuDuongResponseDTO> getNhatKyDieuDuongById(
             @RequestHeader("Authorization") String token,
             @PathVariable Long id) {
@@ -248,7 +248,7 @@ public class NhatKyDieuDuongController {
      * Lấy nhật ký theo tháng để tạo báo cáo - FIXED
      */
     @GetMapping("/bao-cao-thang")
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOIDIENNHATKYDD')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOIDIENNHATKYDD', 'NGUOITONGHOP_NHATKYDD')")
     public ResponseEntity<List<NhatKyDieuDuongResponseDTO>> getBaoCaoThang(
             @RequestHeader("Authorization") String token,
             @RequestParam Long khoaPhongId,
@@ -293,7 +293,7 @@ public class NhatKyDieuDuongController {
      * Lấy template từ bản ghi gần nhất - FIXED
      */
     @GetMapping("/template")
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOIDIENNHATKYDD')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOIDIENNHATKYDD' , 'NGUOITONGHOP_NHATKYDD')")
     public ResponseEntity<NhatKyDieuDuongRequestDTO> getTemplate(
             @RequestHeader("Authorization") String token,
             @RequestParam Long khoaPhongId,
@@ -333,7 +333,7 @@ public class NhatKyDieuDuongController {
      * Lấy danh sách loại mẫu nhật ký
      */
     @GetMapping("/loai-mau")
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOIDIENNHATKYDD')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOIDIENNHATKYDD', 'NGUOITONGHOP_NHATKYDD')")
     public ResponseEntity<LoaiMauNhatKy[]> getLoaiMauNhatKy() {
         logger.info("GET /nhat-ky-dieu-duong/loai-mau request received");
         return ResponseEntity.ok(LoaiMauNhatKy.values());
@@ -343,7 +343,7 @@ public class NhatKyDieuDuongController {
      * Kiểm tra nhật ký đã tồn tại cho ngày cụ thể
      */
     @GetMapping("/kiem-tra-ton-tai")
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOIDIENNHATKYDD')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOIDIENNHATKYDD', 'NGUOITONGHOP_NHATKYDD')")
     public ResponseEntity<Boolean> kiemTraTonTai(
             @RequestHeader("Authorization") String token,
             @RequestParam @DateTimeFormat(pattern = "dd/MM/yyyy") LocalDate ngay,

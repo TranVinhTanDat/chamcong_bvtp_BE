@@ -289,8 +289,9 @@ public class NhatKyDieuDuongService {
 
         switch (userRole) {
             case "ADMIN":
-                // ADMIN có thể truy cập tất cả khoa phòng
-                logger.info("✅ ADMIN access granted for all departments");
+            case "NGUOITONGHOP_NHATKYDD":
+                // ADMIN và NGUOITONGHOP_NHATKYDD có thể truy cập tất cả khoa phòng
+                logger.info("✅ {} access granted for all departments", userRole);
                 break;
 
             case "NGUOIDIENNHATKYDD":
@@ -305,9 +306,8 @@ public class NhatKyDieuDuongService {
                 break;
 
             default:
-                // ❌ LOẠI BỎ TẤT CẢ CÁC ROLE KHÁC
                 logger.error("❌ Unauthorized role for Nhat Ky Dieu Duong: {}", userRole);
-                throw new SecurityException("Chỉ có ADMIN và NGUOIDIENNHATKYDD mới được truy cập nhật ký điều dưỡng");
+                throw new SecurityException("Chỉ có ADMIN, NGUOIDIENNHATKYDD và NGUOITONGHOP_NHATKYDD mới được truy cập nhật ký điều dưỡng");
         }
     }
 
@@ -320,8 +320,9 @@ public class NhatKyDieuDuongService {
 
         switch (userRole) {
             case "ADMIN":
-                // ADMIN có thể truy cập tất cả hoặc theo filter
-                logger.info("✅ ADMIN can access all departments");
+            case "NGUOITONGHOP_NHATKYDD":
+                // ADMIN và NGUOITONGHOP_NHATKYDD có thể truy cập tất cả hoặc theo filter
+                logger.info("✅ {} can access all departments", userRole);
                 return requestedKhoaPhongId; // null = tất cả, có giá trị = filter theo yêu cầu
 
             case "NGUOIDIENNHATKYDD":
@@ -333,9 +334,8 @@ public class NhatKyDieuDuongService {
                 return userKhoaPhongId; // Bắt buộc phải là khoa phòng của user
 
             default:
-                // ❌ LOẠI BỎ TẤT CẢ CÁC ROLE KHÁC
                 logger.error("❌ Unauthorized role for Nhat Ky Dieu Duong: {}", userRole);
-                throw new SecurityException("Chỉ có ADMIN và NGUOIDIENNHATKYDD mới được truy cập nhật ký điều dưỡng");
+                throw new SecurityException("Chỉ có ADMIN, NGUOIDIENNHATKYDD và NGUOITONGHOP_NHATKYDD mới được truy cập nhật ký điều dưỡng");
         }
     }
 

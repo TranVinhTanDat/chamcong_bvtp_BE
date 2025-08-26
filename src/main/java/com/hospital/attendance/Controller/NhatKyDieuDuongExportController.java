@@ -33,7 +33,7 @@ public class NhatKyDieuDuongExportController {
      * Export báo cáo tháng ra Excel
      */
     @GetMapping("/bao-cao-thang")
-    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOIDIENNHATKYDD')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'NGUOIDIENNHATKYDD', 'NGUOITONGHOP_NHATKYDD')")
     public ResponseEntity<byte[]> exportBaoCaoThang(
             @RequestHeader("Authorization") String token,
             @RequestParam Long khoaPhongId,
