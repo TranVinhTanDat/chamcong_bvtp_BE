@@ -130,9 +130,15 @@ public class NhatKyDieuDuongRequestDTO {
     @Min(value = 0, message = "Hút đàm nhớt không được âm")
     private Integer hutDamNhot = 0;
 
+    @Min(value = 0, message = "Truyền máu không được âm")
+    private Integer truyenMau = 0;
+
     // Phân cấp chăm sóc
-    @Min(value = 0, message = "CS cấp I không được âm")
-    private Integer csCapI = 0;
+    @Min(value = 0, message = "Tổng CS cấp I không được âm")
+    private Integer tongCsCapI = 0;
+
+    @Min(value = 0, message = "CS cấp I mới không được âm")
+    private Integer csCapIMoi = 0;
 
     @Min(value = 0, message = "CS cấp II không được âm")
     private Integer csCapII = 0;
@@ -182,11 +188,11 @@ public class NhatKyDieuDuongRequestDTO {
     @Min(value = 0, message = "Hộ sinh không được âm")
     private Integer hoSinh = 0;
 
-    @Min(value = 0, message = "Kỹ thuật viên không được âm")
-    private Integer kyThuatVien = 0;
+    @Min(value = 0, message = "Kỹ thuật y không được âm")
+    private Integer kyThuatY = 0;
 
-    @Min(value = 0, message = "Y sĩ không được âm")
-    private Integer ySi = 0;
+//    @Min(value = 0, message = "Y sĩ không được âm")
+//    private Integer ySi = 0;
 
     @Min(value = 0, message = "Nhân sự khác không được âm")
     private Integer nhanSuKhac = 0;
@@ -269,14 +275,14 @@ public class NhatKyDieuDuongRequestDTO {
     @Min(value = 0, message = "SV ĐD-HS không được âm")
     private Integer svDdHs = 0;
 
-    @Min(value = 0, message = "SV Y sĩ không được âm")
-    private Integer svYSi = 0;
+//    @Min(value = 0, message = "SV Y sĩ không được âm")
+//    private Integer svYSi = 0;
 
-    @Min(value = 0, message = "SV KTV không được âm")
-    private Integer svKtv = 0;
+    @Min(value = 0, message = "SV KTY không được âm")
+    private Integer svKty = 0;
 
-    @Min(value = 0, message = "SV Dược không được âm")
-    private Integer svDuoc = 0;
+//    @Min(value = 0, message = "SV Dược không được âm")
+//    private Integer svDuoc = 0;
 
 
     // === THÔNG TIN MẪU 3 - KHỐI CẬN LÂM SÀNG ===
@@ -329,8 +335,11 @@ public class NhatKyDieuDuongRequestDTO {
     private Integer cdhaXqTongPhim = 0;
 
     // Khoa CĐHA - CT Scanner
-    @Min(value = 0, message = "CĐHA CT tổng NB không được âm")
-    private Integer cdhaCTTongNb = 0;
+    @Min(value = 0, message = "CĐHA CT có cản quang NB không được âm")
+    private Integer cdhaCTCoCanQuangNb = 0;
+
+    @Min(value = 0, message = "CĐHA CT không cản quang NB không được âm")
+    private Integer cdhaCTKhongCanQuangNb = 0;
 
     @Min(value = 0, message = "CĐHA CT tổng phim không được âm")
     private Integer cdhaCTTongPhim = 0;
@@ -403,9 +412,11 @@ public class NhatKyDieuDuongRequestDTO {
         entity.setSondeDaDay(this.sondeDaDay);
         entity.setSondeTieu(this.sondeTieu);
         entity.setHutDamNhot(this.hutDamNhot);
+        entity.setTruyenMau(this.truyenMau);
 
         // Phân cấp chăm sóc
-        entity.setCsCapI(this.csCapI);
+        entity.setTongCsCapI(this.tongCsCapI);
+        entity.setCsCapIMoi(this.csCapIMoi);
         entity.setCsCapII(this.csCapII);
         entity.setCsCapIII(this.csCapIII);
 
@@ -425,8 +436,7 @@ public class NhatKyDieuDuongRequestDTO {
         // Mẫu 2 - Thông tin nhân sự
         entity.setDieuDuong(this.dieuDuong);
         entity.setHoSinh(this.hoSinh);
-        entity.setKyThuatVien(this.kyThuatVien);
-        entity.setYSi(this.ySi);
+        entity.setKyThuatY(this.kyThuatY);
         entity.setNhanSuKhac(this.nhanSuKhac);
         entity.setHoLyNhanSu(this.hoLyNhanSu);
         entity.setTongNhanSu(this.tongNhanSu);
@@ -459,9 +469,7 @@ public class NhatKyDieuDuongRequestDTO {
         entity.setThucHanhKLuong(this.thucHanhKLuong);
         entity.setNhanSuTangCuong(this.nhanSuTangCuong);
         entity.setSvDdHs(this.svDdHs);
-        entity.setSvYSi(this.svYSi);
-        entity.setSvKtv(this.svKtv);
-        entity.setSvDuoc(this.svDuoc);
+        entity.setSvKty(this.svKty);
 
 
         // Mẫu 3 - Khoa Xét nghiệm
@@ -481,7 +489,8 @@ public class NhatKyDieuDuongRequestDTO {
 // Mẫu 3 - Khoa CĐHA
         entity.setCdhaXqTongNb(this.cdhaXqTongNb);
         entity.setCdhaXqTongPhim(this.cdhaXqTongPhim);
-        entity.setCdhaCTTongNb(this.cdhaCTTongNb);
+        entity.setCdhaCTCoCanQuangNb(this.cdhaCTCoCanQuangNb);
+        entity.setCdhaCTKhongCanQuangNb(this.cdhaCTKhongCanQuangNb);
         entity.setCdhaCTTongPhim(this.cdhaCTTongPhim);
         entity.setCdhaSATongNb(this.cdhaSATongNb);
         entity.setCdhaSATongSo(this.cdhaSATongSo);
@@ -574,8 +583,10 @@ public class NhatKyDieuDuongRequestDTO {
         dto.setSondeDaDay(entity.getSondeDaDay());
         dto.setSondeTieu(entity.getSondeTieu());
         dto.setHutDamNhot(entity.getHutDamNhot());
+        dto.setTruyenMau(entity.getTruyenMau());
 
-        dto.setCsCapI(entity.getCsCapI());
+        dto.setTongCsCapI(entity.getTongCsCapI());
+        dto.setCsCapIMoi(entity.getCsCapIMoi());
         dto.setCsCapII(entity.getCsCapII());
         dto.setCsCapIII(entity.getCsCapIII());
 
@@ -594,8 +605,7 @@ public class NhatKyDieuDuongRequestDTO {
         // Mẫu 2
         dto.setDieuDuong(entity.getDieuDuong());
         dto.setHoSinh(entity.getHoSinh());
-        dto.setKyThuatVien(entity.getKyThuatVien());
-        dto.setYSi(entity.getYSi());
+        dto.setKyThuatY(entity.getKyThuatY());
         dto.setNhanSuKhac(entity.getNhanSuKhac());
         dto.setHoLyNhanSu(entity.getHoLyNhanSu());
         dto.setTongNhanSu(entity.getTongNhanSu());
@@ -625,9 +635,7 @@ public class NhatKyDieuDuongRequestDTO {
         dto.setThucHanhKLuong(entity.getThucHanhKLuong());
         dto.setNhanSuTangCuong(entity.getNhanSuTangCuong());
         dto.setSvDdHs(entity.getSvDdHs());
-        dto.setSvYSi(entity.getSvYSi());
-        dto.setSvKtv(entity.getSvKtv());
-        dto.setSvDuoc(entity.getSvDuoc());
+        dto.setSvKty(entity.getSvKty());
 
         // Mẫu 3 - Khoa Xét nghiệm
         dto.setXnTongSoMau(entity.getXnTongSoMau());
@@ -646,7 +654,8 @@ public class NhatKyDieuDuongRequestDTO {
 // Mẫu 3 - Khoa CĐHA
         dto.setCdhaXqTongNb(entity.getCdhaXqTongNb());
         dto.setCdhaXqTongPhim(entity.getCdhaXqTongPhim());
-        dto.setCdhaCTTongNb(entity.getCdhaCTTongNb());
+        dto.setCdhaCTCoCanQuangNb(entity.getCdhaCTCoCanQuangNb());
+        dto.setCdhaCTKhongCanQuangNb(entity.getCdhaCTKhongCanQuangNb());
         dto.setCdhaCTTongPhim(entity.getCdhaCTTongPhim());
         dto.setCdhaSATongNb(entity.getCdhaSATongNb());
         dto.setCdhaSATongSo(entity.getCdhaSATongSo());

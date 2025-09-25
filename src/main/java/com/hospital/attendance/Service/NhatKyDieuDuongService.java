@@ -419,9 +419,11 @@ public class NhatKyDieuDuongService {
         existing.setSondeDaDay(details.getSondeDaDay());
         existing.setSondeTieu(details.getSondeTieu());
         existing.setHutDamNhot(details.getHutDamNhot());
+        existing.setTruyenMau(details.getTruyenMau());
 
         // Phân cấp chăm sóc
-        existing.setCsCapI(details.getCsCapI());
+        existing.setTongCsCapI(details.getTongCsCapI());
+        existing.setCsCapIMoi(details.getCsCapIMoi());
         existing.setCsCapII(details.getCsCapII());
         existing.setCsCapIII(details.getCsCapIII());
 
@@ -441,8 +443,7 @@ public class NhatKyDieuDuongService {
         // Mẫu 2 - Thông tin nhân sự
         existing.setDieuDuong(details.getDieuDuong());
         existing.setHoSinh(details.getHoSinh());
-        existing.setKyThuatVien(details.getKyThuatVien());
-        existing.setYSi(details.getYSi());
+        existing.setKyThuatY(details.getKyThuatY());
         existing.setNhanSuKhac(details.getNhanSuKhac());
         existing.setHoLyNhanSu(details.getHoLyNhanSu());
         existing.setTongNhanSu(details.getTongNhanSu());
@@ -475,9 +476,7 @@ public class NhatKyDieuDuongService {
         existing.setThucHanhKLuong(details.getThucHanhKLuong());
         existing.setNhanSuTangCuong(details.getNhanSuTangCuong());
         existing.setSvDdHs(details.getSvDdHs());
-        existing.setSvYSi(details.getSvYSi());
-        existing.setSvKtv(details.getSvKtv());
-        existing.setSvDuoc(details.getSvDuoc());
+        existing.setSvKty(details.getSvKty());
 
 
         // Mẫu 3 - Khoa Xét nghiệm
@@ -497,7 +496,8 @@ public class NhatKyDieuDuongService {
         // Mẫu 3 - Khoa CĐHA
         existing.setCdhaXqTongNb(details.getCdhaXqTongNb());
         existing.setCdhaXqTongPhim(details.getCdhaXqTongPhim());
-        existing.setCdhaCTTongNb(details.getCdhaCTTongNb());
+        existing.setCdhaCTCoCanQuangNb(details.getCdhaCTCoCanQuangNb());
+        existing.setCdhaCTKhongCanQuangNb(details.getCdhaCTKhongCanQuangNb());
         existing.setCdhaCTTongPhim(details.getCdhaCTTongPhim());
         existing.setCdhaSATongNb(details.getCdhaSATongNb());
         existing.setCdhaSATongSo(details.getCdhaSATongSo());

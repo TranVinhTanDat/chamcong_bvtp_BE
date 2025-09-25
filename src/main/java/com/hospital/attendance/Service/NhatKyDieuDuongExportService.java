@@ -423,31 +423,31 @@ public class NhatKyDieuDuongExportService {
         }
         colNum += 8;
 
-        // Chăm sóc điều dưỡng
+        // Chăm sóc điều dưỡng - THÊM 1 CỘT CHO TRUYỀN MÁU
         Cell csCell = groupRow.createCell(colNum);
         csCell.setCellValue("Chăm sóc điều dưỡng");
         csCell.setCellStyle(groupHeaderStyle);
-        sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, colNum, colNum + 10)); // 11 columns
+        sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, colNum, colNum + 11)); // 12 columns (tăng từ 11)
 
         // Fill empty cells với border
-        for (int i = colNum + 1; i <= colNum + 10; i++) {
+        for (int i = colNum + 1; i <= colNum + 11; i++) {
             Cell emptyCell = groupRow.createCell(i);
             emptyCell.setCellStyle(groupHeaderStyle);
         }
-        colNum += 11;
+        colNum += 12;
 
-        // Phân cấp chăm sóc
+        // Phân cấp chăm sóc - THÊM 1 CỘT CHO CS CẤP I MỚI
         Cell pcCell = groupRow.createCell(colNum);
         pcCell.setCellValue("Phân cấp chăm sóc");
         pcCell.setCellStyle(groupHeaderStyle);
-        sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, colNum, colNum + 2)); // 3 columns
+        sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, colNum, colNum + 3)); // 4 columns (tăng từ 3)
 
         // Fill empty cells với border
-        for (int i = colNum + 1; i <= colNum + 2; i++) {
+        for (int i = colNum + 1; i <= colNum + 3; i++) {
             Cell emptyCell = groupRow.createCell(i);
             emptyCell.setCellStyle(groupHeaderStyle);
         }
-        colNum += 3;
+        colNum += 4;
 
         // Tình hình KCB
         Cell kcbCell = groupRow.createCell(colNum);
@@ -473,11 +473,11 @@ public class NhatKyDieuDuongExportService {
                 "Sanh thường", "Sanh mổ", "Mổ Phụ khoa",
                 // Tình hình phẫu thuật - thủ thuật (8)
                 "Cấp cứu", "Chương trình", "Thủ thuật", "Tiểu phẫu", "Phẫu thuật", "PT loại I", "PT loại II", "PT loại III",
-                // Chăm sóc điều dưỡng (11)
+                // Chăm sóc điều dưỡng (12) - THÊM TRUYỀN MÁU
                 "Thở CPAP", "Thở máy", "Thở Oxy", "Bóp Bóng", "Monitor", "CVP", "Nội Khí Quản", "Nội soi",
-                "Sonde dạ dày", "Sonde tiểu", "Hút đàm nhớt",
-                // Phân cấp chăm sóc (3)
-                "CS cấp I", "CS Cấp II", "CS cấp III",
+                "Sonde dạ dày", "Sonde tiểu", "Hút đàm nhớt", "Truyền máu",
+                // Phân cấp chăm sóc (4) - CHIA CS CẤP I
+                "Tổng CS cấp I", "CS cấp I mới", "CS Cấp II", "CS cấp III",
                 // Tình hình KCB (11)
                 "TS NB KCB", "TS NB cấp cứu", "Ngoại viện", "Chuyển Nội trú", "Chuyển Cấp cứu",
                 "Chuyển viện", "Chuyển PK K.Ngoại", "Tử vong", "Tổng NB đo điện tim",
@@ -502,18 +502,18 @@ public class NhatKyDieuDuongExportService {
         }
         int colNum = 1; // Bỏ qua cột ngày đã có diagonal
 
-        // Tình hình nhân sự
+        // Tình hình nhân sự - GIẢM 1 CỘT (BỎ Y SĨ)
         Cell nsCell = groupRow.createCell(colNum);
         nsCell.setCellValue("Tình hình nhân sự");
         nsCell.setCellStyle(groupHeaderStyle);
-        sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, colNum, colNum + 6)); // 7 columns
+        sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, colNum, colNum + 5)); // 6 columns (giảm từ 7)
 
         // Fill empty cells với border
-        for (int i = colNum + 1; i <= colNum + 6; i++) {
+        for (int i = colNum + 1; i <= colNum + 5; i++) {
             Cell emptyCell = groupRow.createCell(i);
             emptyCell.setCellStyle(groupHeaderStyle);
         }
-        colNum += 7;
+        colNum += 6;
 
         // Hiện diện
         Cell hdCell = groupRow.createCell(colNum);
@@ -541,14 +541,14 @@ public class NhatKyDieuDuongExportService {
         }
         colNum += 10;
 
-        // Đào tạo
+        // Đào tạo - GIẢM 2 CỘT (BỎ SV Y SĨ, SV DƯỢC)
         Cell dtCell = groupRow.createCell(colNum);
         dtCell.setCellValue("Đào tạo");
         dtCell.setCellStyle(groupHeaderStyle);
-        sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, colNum, colNum + 6)); // 7 columns
+        sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, colNum, colNum + 4)); // 5 columns (giảm từ 7)
 
         // Fill empty cells với border
-        for (int i = colNum + 1; i <= colNum + 6; i++) {
+        for (int i = colNum + 1; i <= colNum + 4; i++) {
             Cell emptyCell = groupRow.createCell(i);
             emptyCell.setCellStyle(groupHeaderStyle);
         }
@@ -558,14 +558,14 @@ public class NhatKyDieuDuongExportService {
         colNum = 1; // Skip merged date cell
 
         String[] detailHeaders = {
-                // Tình hình nhân sự (7)
-                "Điều dưỡng", "Hộ sinh", "Kỹ thuật viên", "Y sĩ", "Khác", "Hộ lý", "Tổng",
+                // Tình hình nhân sự (6) - BỎ Y SĨ, ĐỔI KỸ THUẬT VIÊN
+                "Điều dưỡng", "Hộ sinh", "Kỹ thuật y", "Khác", "Hộ lý", "Tổng",
                 // Hiện diện (9)
                 "ĐDT khoa", "ĐDHC", "Phòng khám", "Tour sáng", "Tour chiều", "Tour đêm", "Trực 24/24", "Hộ lý", "Tổng",
                 // Vắng (10)
                 "Ra trực", "Bù trực", "Nghỉ phép", "Nghỉ ốm", "Nghỉ hậu sản", "Nghỉ khác", "Đi học", "Công tác", "Hộ lý", "Tổng",
-                // Đào tạo (7)
-                "Nhân viên thử việc", "Thực hành k lương", "Nhân sự tăng cường", "SV ĐD - HS", "SV Y Sĩ", "SV KTV", "SV Dược"
+                // Đào tạo (5) - BỎ SV Y SĨ, SV DƯỢC, ĐỔI SV KTV
+                "Nhân viên thử việc", "Thực hành k lương", "Nhân sự tăng cường", "SV ĐD - HS", "SV KTY"
         };
 
         for (String header : detailHeaders) {
@@ -619,7 +619,7 @@ public class NhatKyDieuDuongExportService {
         Row row = sheet.createRow(rowNum);
         int colNum = 0;
 
-        // ✅ TẠO STYLE CHO DÒNG TRỐNG NỂU KHÔNG CÓ DỮ LIỆU
+        // TẠO STYLE CHO DÒNG TRỐNG NỂU KHÔNG CÓ DỮ LIỆU
         CellStyle styleToUse = dataStyle;
         if (nhatKy == null) {
             styleToUse = createEmptyRowStyle(sheet.getWorkbook());
@@ -659,7 +659,7 @@ public class NhatKyDieuDuongExportService {
             setCellValue(row, colNum++, nhatKy.getPtLoaiII(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getPtLoaiIII(), dataStyle);
 
-            // Chăm sóc điều dưỡng
+            // Chăm sóc điều dưỡng - THÊM TRUYỀN MÁU
             setCellValue(row, colNum++, nhatKy.getThoCpap(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getThoMay(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getThoOxy(), dataStyle);
@@ -671,9 +671,11 @@ public class NhatKyDieuDuongExportService {
             setCellValue(row, colNum++, nhatKy.getSondeDaDay(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getSondeTieu(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getHutDamNhot(), dataStyle);
+            setCellValue(row, colNum++, nhatKy.getTruyenMau(), dataStyle); // THÊM MỚI
 
-            // Phân cấp chăm sóc
-            setCellValue(row, colNum++, nhatKy.getCsCapI(), dataStyle);
+            // Phân cấp chăm sóc - CHIA CS CẤP I
+            setCellValue(row, colNum++, nhatKy.getTongCsCapI(), dataStyle); // THAY ĐỔI
+            setCellValue(row, colNum++, nhatKy.getCsCapIMoi(), dataStyle);   // THÊM MỚI
             setCellValue(row, colNum++, nhatKy.getCsCapII(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getCsCapIII(), dataStyle);
 
@@ -690,11 +692,11 @@ public class NhatKyDieuDuongExportService {
             setCellValue(row, colNum++, nhatKy.getTongNbDoDienCo(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getTongNbDoChucNangHoHap(), dataStyle);
         } else {
-            // ✅ KHÔNG CÓ DỮ LIỆU - FILL CÁC CELL VỚI GIÁ TRỊ 0 VÀ STYLE MÀU KHÁC
-            for (int i = 1; i < 48; i++) { // 47 columns + date column
+            // KHÔNG CÓ DỮ LIỆU - FILL CÁC CELL VỚI GIÁ TRỊ 0 VÀ STYLE MÀU KHÁC
+            for (int i = 1; i < 50; i++) { // 49 columns + date column (tăng từ 48)
                 Cell cell = row.createCell(colNum++);
-                cell.setCellValue(0); // ✅ ĐẶT GIÁ TRỊ 0 THAY VÌ TRỐNG
-                cell.setCellStyle(styleToUse); // ✅ SỬ DỤNG STYLE CÓ MÀU NỀN
+                cell.setCellValue(0);
+                cell.setCellStyle(styleToUse);
             }
         }
     }
@@ -706,7 +708,7 @@ public class NhatKyDieuDuongExportService {
         Row row = sheet.createRow(rowNum);
         int colNum = 0;
 
-        // ✅ TẠO STYLE CHO DÒNG TRỐNG NỂU KHÔNG CÓ DỮ LIỆU
+        // TẠO STYLE CHO DÒNG TRỐNG NỂU KHÔNG CÓ DỮ LIỆU
         CellStyle styleToUse = dataStyle;
         if (nhatKy == null) {
             styleToUse = createEmptyRowStyle(sheet.getWorkbook());
@@ -718,12 +720,11 @@ public class NhatKyDieuDuongExportService {
         dateCell.setCellStyle(dataStyle);
 
         if (nhatKy != null) {
-            // Có dữ liệu - fill như cũ
+            // Có dữ liệu - SỬA THEO TRƯỜNG MỚI
             setCellValue(row, colNum++, nhatKy.getDieuDuong(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getHoSinh(), dataStyle);
-            setCellValue(row, colNum++, nhatKy.getKyThuatVien(), dataStyle);
-            setCellValue(row, colNum++, nhatKy.getYSi(), dataStyle);
-            setCellValue(row, colNum++, nhatKy.getNhanSuKhac(), dataStyle);
+            setCellValue(row, colNum++, nhatKy.getKyThuatY(), dataStyle);     // ĐỔI TỪ kyThuatVien
+            setCellValue(row, colNum++, nhatKy.getNhanSuKhac(), dataStyle);   // BỎ ySi
             setCellValue(row, colNum++, nhatKy.getHoLyNhanSu(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getTongNhanSu(), dataStyle);
 
@@ -750,20 +751,18 @@ public class NhatKyDieuDuongExportService {
             setCellValue(row, colNum++, nhatKy.getHoLyVang(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getTongVang(), dataStyle);
 
-            // Đào tạo
+            // Đào tạo - BỎ svYSi, svDuoc, ĐỔI svKtv
             setCellValue(row, colNum++, nhatKy.getNhanVienThuViec(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getThucHanhKLuong(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getNhanSuTangCuong(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getSvDdHs(), dataStyle);
-            setCellValue(row, colNum++, nhatKy.getSvYSi(), dataStyle);
-            setCellValue(row, colNum++, nhatKy.getSvKtv(), dataStyle);
-            setCellValue(row, colNum++, nhatKy.getSvDuoc(), dataStyle);
+            setCellValue(row, colNum++, nhatKy.getSvKty(), dataStyle);        // ĐỔI TỪ svKtv
         } else {
-            // ✅ KHÔNG CÓ DỮ LIỆU - FILL CÁC CELL VỚI GIÁ TRỊ 0 VÀ STYLE MÀU KHÁC
-            for (int i = 1; i < 34; i++) { // 33 columns + date column
+            // KHÔNG CÓ DỮ LIỆU - FILL CÁC CELL VỚI GIÁ TRỊ 0 VÀ STYLE MÀU KHÁC
+            for (int i = 1; i < 31; i++) { // 30 columns + date column (giảm từ 34)
                 Cell cell = row.createCell(colNum++);
-                cell.setCellValue(0); // ✅ ĐẶT GIÁ TRỊ 0 THAY VÌ TRỐNG
-                cell.setCellStyle(styleToUse); // ✅ SỬ DỤNG STYLE CÓ MÀU NỀN
+                cell.setCellValue(0);
+                cell.setCellStyle(styleToUse);
             }
         }
     }
@@ -773,11 +772,11 @@ public class NhatKyDieuDuongExportService {
      */
     private void setMau1ColumnWidths(Sheet sheet) {
         // Cột ngày rộng hơn
-        sheet.setColumnWidth(0, 2300); // Tăng để chứa diagonal header
+        sheet.setColumnWidth(0, 2300);
 
         // Các cột dữ liệu nhỏ hơn vì text đã dọc
-        for (int i = 1; i < 48; i++) {
-            sheet.setColumnWidth(i, 1200); // Nhỏ hơn vì text dọc
+        for (int i = 1; i < 50; i++) { // TĂNG TỪ 48 LÊN 50
+            sheet.setColumnWidth(i, 1200);
         }
     }
 
@@ -786,11 +785,11 @@ public class NhatKyDieuDuongExportService {
      */
     private void setMau2ColumnWidths(Sheet sheet) {
         // Cột ngày rộng hơn
-        sheet.setColumnWidth(0, 2300); // Tăng để chứa diagonal header
+        sheet.setColumnWidth(0, 2300);
 
         // Các cột dữ liệu nhỏ hơn vì text đã dọc
-        for (int i = 1; i < 34; i++) {
-            sheet.setColumnWidth(i, 1200); // Nhỏ hơn vì text dọc
+        for (int i = 1; i < 31; i++) { // GIẢM TỪ 34 XUỐNG 31
+            sheet.setColumnWidth(i, 1200);
         }
     }
 
@@ -919,11 +918,11 @@ public class NhatKyDieuDuongExportService {
         String sheetName = sheet.getSheetName().toLowerCase();
 
         if (sheetName.contains("cận lâm sàng") || sheetName.contains("mau3")) {
-            return 19; // Mẫu 3: 18 cột dữ liệu + 1 cột ngày
+            return 20; // ✅ SỬA: Mẫu 3: 19 cột dữ liệu + 1 cột ngày = 20 cột total
         } else if (sheetName.contains("nhân sự") || sheetName.contains("mau2")) {
-            return 34; // Mẫu 2: 33 cột dữ liệu + 1 cột ngày
+            return 31; // Mẫu 2: 30 cột dữ liệu + 1 cột ngày
         } else { // Default cho mẫu 1 hoặc tên khác
-            return 48; // Mẫu 1: 47 cột dữ liệu + 1 cột ngày
+            return 50; // Mẫu 1: 49 cột dữ liệu + 1 cột ngày
         }
     }
 
@@ -1105,8 +1104,8 @@ public class NhatKyDieuDuongExportService {
         int capCuu = 0, chuongTrinh = 0, thuThuat = 0, tieuPhau = 0, phauThuat = 0;
         int ptLoaiI = 0, ptLoaiII = 0, ptLoaiIII = 0;
         int thoCpap = 0, thoMay = 0, thoOxy = 0, bopBong = 0, monitor = 0, cvp = 0;
-        int noiKhiQuan = 0, noiSoi = 0, sondeDaDay = 0, sondeTieu = 0, hutDamNhot = 0;
-        int csCapI = 0, csCapII = 0, csCapIII = 0;
+        int noiKhiQuan = 0, noiSoi = 0, sondeDaDay = 0, sondeTieu = 0, hutDamNhot = 0, truyenMau = 0; // THÊM truyenMau
+        int tongCsCapI = 0, csCapIMoi = 0, csCapII = 0, csCapIII = 0; // SỬA csCapI thành tongCsCapI và thêm csCapIMoi
         int tsNbKcb = 0, tsNbCapCuu = 0, ngoaiVien = 0, chuyenNoiTru = 0, chuyenCapCuu = 0;
         int chuyenVienKcb = 0, chuyenPkKNgoai = 0, tuVongKcb = 0;
         int tongNbDoDienTim = 0, tongNbDoDienCo = 0, tongNbDoChucNangHoHap = 0;
@@ -1148,8 +1147,10 @@ public class NhatKyDieuDuongExportService {
             sondeDaDay += nvl(nk.getSondeDaDay());
             sondeTieu += nvl(nk.getSondeTieu());
             hutDamNhot += nvl(nk.getHutDamNhot());
+            truyenMau += nvl(nk.getTruyenMau()); // THÊM MỚI
 
-            csCapI += nvl(nk.getCsCapI());
+            tongCsCapI += nvl(nk.getTongCsCapI()); // SỬA TỪ getCsCapI
+            csCapIMoi += nvl(nk.getCsCapIMoi());   // THÊM MỚI
             csCapII += nvl(nk.getCsCapII());
             csCapIII += nvl(nk.getCsCapIII());
 
@@ -1171,20 +1172,19 @@ public class NhatKyDieuDuongExportService {
      * Class để lưu tổng cộng cho mẫu 2
      */
     private static class Mau2Totals {
-        int dieuDuong = 0, hoSinh = 0, kyThuatVien = 0, ySi = 0, nhanSuKhac = 0, hoLyNhanSu = 0, tongNhanSu = 0;
+        int dieuDuong = 0, hoSinh = 0, kyThuatY = 0, nhanSuKhac = 0, hoLyNhanSu = 0, tongNhanSu = 0; // BỎ ySi, SỬA kyThuatVien
         int ddtKhoa = 0, ddhc = 0, phongKham = 0, tourSang = 0, tourChieu = 0, tourDem = 0;
         int truc2424 = 0, hoLyHienDien = 0, tongHienDien = 0;
         int raTruc = 0, buTruc = 0, nghiPhep = 0, nghiOm = 0, nghiHauSan = 0, nghiKhac = 0;
         int diHoc = 0, congTac = 0, hoLyVang = 0, tongVang = 0;
         int nhanVienThuViec = 0, thucHanhKLuong = 0, nhanSuTangCuong = 0;
-        int svDdHs = 0, svYSi = 0, svKtv = 0, svDuoc = 0;
+        int svDdHs = 0, svKty = 0; // BỎ svYSi, svDuoc, SỬA svKtv
 
         void add(NhatKyDieuDuong nk) {
             dieuDuong += nvl(nk.getDieuDuong());
             hoSinh += nvl(nk.getHoSinh());
-            kyThuatVien += nvl(nk.getKyThuatVien());
-            ySi += nvl(nk.getYSi());
-            nhanSuKhac += nvl(nk.getNhanSuKhac());
+            kyThuatY += nvl(nk.getKyThuatY());     // SỬA TỪ getKyThuatVien
+            nhanSuKhac += nvl(nk.getNhanSuKhac()); // BỎ ySi
             hoLyNhanSu += nvl(nk.getHoLyNhanSu());
             tongNhanSu += nvl(nk.getTongNhanSu());
 
@@ -1213,9 +1213,8 @@ public class NhatKyDieuDuongExportService {
             thucHanhKLuong += nvl(nk.getThucHanhKLuong());
             nhanSuTangCuong += nvl(nk.getNhanSuTangCuong());
             svDdHs += nvl(nk.getSvDdHs());
-            svYSi += nvl(nk.getSvYSi());
-            svKtv += nvl(nk.getSvKtv());
-            svDuoc += nvl(nk.getSvDuoc());
+            svKty += nvl(nk.getSvKty()); // SỬA TỪ getSvKtv
+            // BỎ svYSi và svDuoc
         }
     }
 
@@ -1275,8 +1274,10 @@ public class NhatKyDieuDuongExportService {
         setCellValue(row, colNum++, totals.sondeDaDay, totalStyle);
         setCellValue(row, colNum++, totals.sondeTieu, totalStyle);
         setCellValue(row, colNum++, totals.hutDamNhot, totalStyle);
+        setCellValue(row, colNum++, totals.truyenMau, totalStyle); // THÊM MỚI
 
-        setCellValue(row, colNum++, totals.csCapI, totalStyle);
+        setCellValue(row, colNum++, totals.tongCsCapI, totalStyle); // SỬA TỪ csCapI
+        setCellValue(row, colNum++, totals.csCapIMoi, totalStyle);  // THÊM MỚI
         setCellValue(row, colNum++, totals.csCapII, totalStyle);
         setCellValue(row, colNum++, totals.csCapIII, totalStyle);
 
@@ -1308,9 +1309,8 @@ public class NhatKyDieuDuongExportService {
         // Tất cả các cột dữ liệu
         setCellValue(row, colNum++, totals.dieuDuong, totalStyle);
         setCellValue(row, colNum++, totals.hoSinh, totalStyle);
-        setCellValue(row, colNum++, totals.kyThuatVien, totalStyle);
-        setCellValue(row, colNum++, totals.ySi, totalStyle);
-        setCellValue(row, colNum++, totals.nhanSuKhac, totalStyle);
+        setCellValue(row, colNum++, totals.kyThuatY, totalStyle);    // SỬA TỪ kyThuatVien
+        setCellValue(row, colNum++, totals.nhanSuKhac, totalStyle); // BỎ ySi
         setCellValue(row, colNum++, totals.hoLyNhanSu, totalStyle);
         setCellValue(row, colNum++, totals.tongNhanSu, totalStyle);
 
@@ -1339,9 +1339,8 @@ public class NhatKyDieuDuongExportService {
         setCellValue(row, colNum++, totals.thucHanhKLuong, totalStyle);
         setCellValue(row, colNum++, totals.nhanSuTangCuong, totalStyle);
         setCellValue(row, colNum++, totals.svDdHs, totalStyle);
-        setCellValue(row, colNum++, totals.svYSi, totalStyle);
-        setCellValue(row, colNum++, totals.svKtv, totalStyle);
-        setCellValue(row, colNum++, totals.svDuoc, totalStyle);
+        setCellValue(row, colNum++, totals.svKty, totalStyle); // SỬA TỪ svKtv
+        // BỎ svYSi và svDuoc
     }
 
     /**
@@ -1496,7 +1495,7 @@ public class NhatKyDieuDuongExportService {
     // ✅ THÊM CÁC METHOD HỖ TRỢ CHO MẪU 3
 
     /**
-     * ✅ SỬA LẠI HEADERS CHO MẪU 3 - ĐÚNG CẤU TRÚC VỚI ĐẦY ĐỦ SUB-GROUPS
+     * ✅ SỬA LẠI HEADERS CHO MẪU 3 - ĐỔI THỨ TỰ: NGƯỜI BỆNH TRƯỚC, MẪU XÉT NGHIỆM SAU
      */
     private void createMau3VerticalHeaders(Sheet sheet, int rowNum, CellStyle headerStyle, CellStyle groupHeaderStyle) {
         // Row 1: Group headers chính (tầng 1)
@@ -1506,7 +1505,7 @@ public class NhatKyDieuDuongExportService {
         }
         int colNum = 1; // Bỏ qua cột ngày đã có diagonal
 
-        // ✅ NHÓM 1: "Tình hình Khoa Xét nghiệm" (12 cột)
+        // ✅ NHÓM 1: "Tình hình Khoa Xét nghiệm" (12 cột) - KHÔNG ĐỔI
         Cell xnMainCell = groupRow.createCell(colNum);
         xnMainCell.setCellValue("Tình hình Khoa Xét nghiệm");
         xnMainCell.setCellStyle(groupHeaderStyle);
@@ -1519,35 +1518,23 @@ public class NhatKyDieuDuongExportService {
         }
         colNum += 12;
 
-        // ✅ NHÓM 2: "Tình hình khoa CĐHA" (6 cột)
+        // ✅ NHÓM 2: "Tình hình khoa CĐHA" (7 cột) - KHÔNG ĐỔI
         Cell cdhaMainCell = groupRow.createCell(colNum);
         cdhaMainCell.setCellValue("Tình hình khoa CĐHA");
         cdhaMainCell.setCellStyle(groupHeaderStyle);
-        sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, colNum, colNum + 5)); // 6 columns
+        sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, colNum, colNum + 6)); // 7 columns
 
         // Fill empty cells với border cho nhóm CĐHA
-        for (int i = colNum + 1; i <= colNum + 5; i++) {
+        for (int i = colNum + 1; i <= colNum + 6; i++) {
             Cell emptyCell = groupRow.createCell(i);
             emptyCell.setCellStyle(groupHeaderStyle);
         }
 
-        // ✅ Row 2: Sub-group headers (tầng 2) - CÁC NHÓM CON
+        // ✅ Row 2: Sub-group headers (tầng 2) - ĐỔI THỨ TỰ: NGƯỜI BỆNH TRƯỚC
         Row subGroupRow = sheet.createRow(rowNum + 1);
         colNum = 1; // Reset về cột đầu
 
-        // ✅ SUB-GROUP 1: "Mẫu Xét nghiệm" (4 cột)
-        Cell mauXnCell = subGroupRow.createCell(colNum);
-        mauXnCell.setCellValue("Mẫu Xét nghiệm");
-        mauXnCell.setCellStyle(groupHeaderStyle);
-        sheet.addMergedRegion(new CellRangeAddress(rowNum + 1, rowNum + 1, colNum, colNum + 3)); // 4 columns
-
-        for (int i = colNum + 1; i <= colNum + 3; i++) {
-            Cell emptyCell = subGroupRow.createCell(i);
-            emptyCell.setCellStyle(groupHeaderStyle);
-        }
-        colNum += 4;
-
-        // ✅ SUB-GROUP 2: "Người bệnh" (4 cột)
+        // ✅ SUB-GROUP 1: "Người bệnh" (4 cột) - ĐỔI LÊN ĐẦU
         Cell nguoiBenhCell = subGroupRow.createCell(colNum);
         nguoiBenhCell.setCellValue("Người bệnh");
         nguoiBenhCell.setCellStyle(groupHeaderStyle);
@@ -1559,7 +1546,19 @@ public class NhatKyDieuDuongExportService {
         }
         colNum += 4;
 
-        // ✅ SUB-GROUP 3: "Loại Xét nghiệm" (4 cột) - THÊM HEADER CHO NHÓM NÀY
+        // ✅ SUB-GROUP 2: "Mẫu Xét nghiệm" (4 cột) - ĐỔI XUỐNG THỨ 2
+        Cell mauXnCell = subGroupRow.createCell(colNum);
+        mauXnCell.setCellValue("Mẫu Xét nghiệm");
+        mauXnCell.setCellStyle(groupHeaderStyle);
+        sheet.addMergedRegion(new CellRangeAddress(rowNum + 1, rowNum + 1, colNum, colNum + 3)); // 4 columns
+
+        for (int i = colNum + 1; i <= colNum + 3; i++) {
+            Cell emptyCell = subGroupRow.createCell(i);
+            emptyCell.setCellStyle(groupHeaderStyle);
+        }
+        colNum += 4;
+
+        // ✅ SUB-GROUP 3: "Loại Xét nghiệm" (4 cột) - KHÔNG ĐỔI
         Cell loaiXnCell = subGroupRow.createCell(colNum);
         loaiXnCell.setCellValue("Loại Xét nghiệm");
         loaiXnCell.setCellStyle(groupHeaderStyle);
@@ -1571,7 +1570,7 @@ public class NhatKyDieuDuongExportService {
         }
         colNum += 4;
 
-        // ✅ SUB-GROUP 4: "X-quang" (2 cột)
+        // ✅ SUB-GROUP 4: "X-quang" (2 cột) - KHÔNG ĐỔI
         Cell xquangCell = subGroupRow.createCell(colNum);
         xquangCell.setCellValue("X-quang");
         xquangCell.setCellStyle(groupHeaderStyle);
@@ -1581,17 +1580,19 @@ public class NhatKyDieuDuongExportService {
         emptyXQ.setCellStyle(groupHeaderStyle);
         colNum += 2;
 
-        // ✅ SUB-GROUP 5: "CT Scaner" (2 cột)
+        // ✅ SUB-GROUP 5: "CT Scanner" (3 cột) - KHÔNG ĐỔI
         Cell ctCell = subGroupRow.createCell(colNum);
-        ctCell.setCellValue("CT Scaner");
+        ctCell.setCellValue("CT Scanner");
         ctCell.setCellStyle(groupHeaderStyle);
-        sheet.addMergedRegion(new CellRangeAddress(rowNum + 1, rowNum + 1, colNum, colNum + 1)); // 2 columns
+        sheet.addMergedRegion(new CellRangeAddress(rowNum + 1, rowNum + 1, colNum, colNum + 2)); // 3 columns
 
-        Cell emptyCT = subGroupRow.createCell(colNum + 1);
-        emptyCT.setCellStyle(groupHeaderStyle);
-        colNum += 2;
+        Cell emptyCT1 = subGroupRow.createCell(colNum + 1);
+        emptyCT1.setCellStyle(groupHeaderStyle);
+        Cell emptyCT2 = subGroupRow.createCell(colNum + 2);
+        emptyCT2.setCellStyle(groupHeaderStyle);
+        colNum += 3;
 
-        // ✅ SUB-GROUP 6: "Siêu Âm" (2 cột)
+        // ✅ SUB-GROUP 6: "Siêu Âm" (2 cột) - KHÔNG ĐỔI
         Cell sieuAmCell = subGroupRow.createCell(colNum);
         sieuAmCell.setCellValue("Siêu Âm");
         sieuAmCell.setCellStyle(groupHeaderStyle);
@@ -1600,45 +1601,50 @@ public class NhatKyDieuDuongExportService {
         Cell emptySA = subGroupRow.createCell(colNum + 1);
         emptySA.setCellStyle(groupHeaderStyle);
 
-        // ✅ Row 3: Detail headers với text dọc (tầng 3)
+        // ✅ Row 3: Detail headers với text dọc (tầng 3) - ĐỔI THỨ TỰ
         Row detailRow = sheet.createRow(rowNum + 2);
         colNum = 1; // Skip merged date cell
 
         String[] detailHeaders = {
-                // ✅ Mẫu Xét nghiệm (4 cột)
-                "Tổng số mẫu", "Ngoại trú", "Nội trú", "Cấp cứu",
-
-                // ✅ Người bệnh (4 cột)
+                // ✅ Người bệnh (4 cột) - ĐỔI LÊN ĐẦU
                 "Tổng số NB", "Ngoại trú", "Nội trú", "Cấp cứu",
 
-                // ✅ Loại xét nghiệm (4 cột) - GIỜ CÓ HEADER NHÓM
+                // ✅ Mẫu Xét nghiệm (4 cột) - ĐỔI XUỐNG THỨ 2
+                "Tổng số mẫu", "Ngoại trú", "Nội trú", "Cấp cứu",
+
+                // ✅ Loại xét nghiệm (4 cột) - KHÔNG ĐỔI
                 "Huyết học", "Sinh hóa", "Vi sinh", "Giải phẫu bệnh",
 
-                // ✅ X-quang (2 cột)
+                // ✅ X-quang (2 cột) - KHÔNG ĐỔI
                 "Tổng số NB", "Tổng số phim X-quang",
 
-                // ✅ CT Scanner (2 cột)
-                "Tổng số NB", "Tổng số phim CT Scaner",
+                // ✅ CT Scanner (3 cột) - KHÔNG ĐỔI
+                "NB có cản quang", "NB không cản quang", "Tổng số phim CT",
 
-                // ✅ Siêu âm (2 cột)
+                // ✅ Siêu âm (2 cột) - KHÔNG ĐỔI
                 "Tổng số NB", "Tổng số siêu âm"
         };
 
+        // ✅ ÁP DỤNG STYLE CHO TẤT CẢ DETAIL HEADERS
         for (String header : detailHeaders) {
             Cell cell = detailRow.createCell(colNum++);
             cell.setCellValue(header);
             cell.setCellStyle(headerStyle);
         }
+
+        // ✅ KIỂM TRA SỐ LƯỢNG CỘT CUỐI CÙNG
+        logger.info("✅ Mau3 total detail columns created: {}", colNum - 1);
+        logger.info("✅ Expected: 19 columns (4+4+4+2+3+2 = 19) - order changed");
     }
 
     /**
-     * Tạo data row cho mẫu 3
+     * Tạo data row cho mẫu 3 - ĐỔI THỨ TỰ: NGƯỜI BỆNH TRƯỚC, MẪU XÉT NGHIỆM SAU
      */
     private void createMau3DataRowImproved(Sheet sheet, int rowNum, int day, NhatKyDieuDuong nhatKy, CellStyle dataStyle) {
         Row row = sheet.createRow(rowNum);
         int colNum = 0;
 
-        // ✅ TẠO STYLE CHO DÒNG TRỐNG NỂU KHÔNG CÓ DỮ LIỆU
+        // TẠO STYLE CHO DÒNG TRỐNG NỂU KHÔNG CÓ DỮ LIỆU
         CellStyle styleToUse = dataStyle;
         if (nhatKy == null) {
             styleToUse = createEmptyRowStyle(sheet.getWorkbook());
@@ -1650,35 +1656,49 @@ public class NhatKyDieuDuongExportService {
         dateCell.setCellStyle(dataStyle);
 
         if (nhatKy != null) {
-            // Khoa Xét nghiệm
-            setCellValue(row, colNum++, nhatKy.getXnTongSoMau(), dataStyle);
-            setCellValue(row, colNum++, nhatKy.getXnMauNgoaiTru(), dataStyle);
-            setCellValue(row, colNum++, nhatKy.getXnMauNoiTru(), dataStyle);
-            setCellValue(row, colNum++, nhatKy.getXnMauCapCuu(), dataStyle);
+            // Có dữ liệu - 19 cột dữ liệu với thứ tự mới: NGƯỜI BỆNH TRƯỚC
+
+            // ✅ NHÓM 1: Người bệnh XÉT NGHIỆM (4 cột) - ĐỔI LÊN ĐẦU
             setCellValue(row, colNum++, nhatKy.getXnNbTongSo(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getXnNbNgoaiTru(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getXnNbNoiTru(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getXnNbCapCuu(), dataStyle);
+
+            // ✅ NHÓM 2: Mẫu xét nghiệm (4 cột) - ĐỔI XUỐNG THỨ 2
+            setCellValue(row, colNum++, nhatKy.getXnTongSoMau(), dataStyle);
+            setCellValue(row, colNum++, nhatKy.getXnMauNgoaiTru(), dataStyle);
+            setCellValue(row, colNum++, nhatKy.getXnMauNoiTru(), dataStyle);
+            setCellValue(row, colNum++, nhatKy.getXnMauCapCuu(), dataStyle);
+
+            // ✅ NHÓM 3: Loại xét nghiệm (4 cột) - KHÔNG ĐỔI
             setCellValue(row, colNum++, nhatKy.getXnHuyetHoc(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getXnSinhHoa(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getXnViSinh(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getXnGiaiPhauBenh(), dataStyle);
 
-            // Khoa CĐHA
+            // ✅ NHÓM 4: Khoa CĐHA - X-quang (2 cột) - KHÔNG ĐỔI
             setCellValue(row, colNum++, nhatKy.getCdhaXqTongNb(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getCdhaXqTongPhim(), dataStyle);
-            setCellValue(row, colNum++, nhatKy.getCdhaCTTongNb(), dataStyle);
+
+            // ✅ NHÓM 5: CT Scanner (3 cột) - KHÔNG ĐỔI
+            setCellValue(row, colNum++, nhatKy.getCdhaCTCoCanQuangNb(), dataStyle);
+            setCellValue(row, colNum++, nhatKy.getCdhaCTKhongCanQuangNb(), dataStyle);
             setCellValue(row, colNum++, nhatKy.getCdhaCTTongPhim(), dataStyle);
+
+            // ✅ NHÓM 6: Siêu âm (2 cột) - KHÔNG ĐỔI
             setCellValue(row, colNum++, nhatKy.getCdhaSATongNb(), dataStyle);
-            setCellValue(row, colNum++, nhatKy.getCdhaSATongSo(), dataStyle);
+            setCellValue(row, colNum++, nhatKy.getCdhaSATongSo(), dataStyle); // Cột 19
         } else {
-            // ✅ KHÔNG CÓ DỮ LIỆU - FILL CÁC CELL VỚI GIÁ TRỊ 0 VÀ STYLE MÀU KHÁC
-            for (int i = 1; i < 19; i++) { // 18 columns + date column
+            // ✅ KHÔNG CÓ DỮ LIỆU - ĐẢM BẢO TẤT CẢ 19 CỘT ĐỀU CÓ MÀU XÁM
+            for (int i = 1; i <= 19; i++) { // ✅ SỬA: chạy từ 1 đến 19 (bao gồm cột cuối)
                 Cell cell = row.createCell(colNum++);
-                cell.setCellValue(0); // ✅ ĐẶT GIÁ TRỊ 0 THAY VÌ TRỐNG
-                cell.setCellStyle(styleToUse); // ✅ SỬ DỤNG STYLE CÓ MÀU NỀN
+                cell.setCellValue(0);
+                cell.setCellStyle(styleToUse); // ✅ Style có màu xám
             }
         }
+
+        // ✅ THÊM LOG ĐỂ DEBUG
+        logger.debug("Mau3 row {}: created {} columns with new order (NB first)", day, colNum - 1);
     }
 
     /**
@@ -1688,7 +1708,8 @@ public class NhatKyDieuDuongExportService {
         int xnTongSoMau = 0, xnMauNgoaiTru = 0, xnMauNoiTru = 0, xnMauCapCuu = 0;
         int xnNbTongSo = 0, xnNbNgoaiTru = 0, xnNbNoiTru = 0, xnNbCapCuu = 0;
         int xnHuyetHoc = 0, xnSinhHoa = 0, xnViSinh = 0, xnGiaiPhauBenh = 0;
-        int cdhaXqTongNb = 0, cdhaXqTongPhim = 0, cdhaCTTongNb = 0, cdhaCTTongPhim = 0;
+        int cdhaXqTongNb = 0, cdhaXqTongPhim = 0;
+        int cdhaCTCoCanQuangNb = 0, cdhaCTKhongCanQuangNb = 0, cdhaCTTongPhim = 0; // SỬA CT Scanner
         int cdhaSATongNb = 0, cdhaSATongSo = 0;
 
         void add(NhatKyDieuDuong nk) {
@@ -1704,9 +1725,11 @@ public class NhatKyDieuDuongExportService {
             xnSinhHoa += nvl(nk.getXnSinhHoa());
             xnViSinh += nvl(nk.getXnViSinh());
             xnGiaiPhauBenh += nvl(nk.getXnGiaiPhauBenh());
+
             cdhaXqTongNb += nvl(nk.getCdhaXqTongNb());
             cdhaXqTongPhim += nvl(nk.getCdhaXqTongPhim());
-            cdhaCTTongNb += nvl(nk.getCdhaCTTongNb());
+            cdhaCTCoCanQuangNb += nvl(nk.getCdhaCTCoCanQuangNb());     // SỬA TỪ getCdhaCTTongNb
+            cdhaCTKhongCanQuangNb += nvl(nk.getCdhaCTKhongCanQuangNb()); // THÊM MỚI
             cdhaCTTongPhim += nvl(nk.getCdhaCTTongPhim());
             cdhaSATongNb += nvl(nk.getCdhaSATongNb());
             cdhaSATongSo += nvl(nk.getCdhaSATongSo());
@@ -1714,7 +1737,7 @@ public class NhatKyDieuDuongExportService {
     }
 
     /**
-     * Tạo dòng tổng cộng cho mẫu 3
+     * Tạo dòng tổng cộng cho mẫu 3 - ĐỔI THỨ TỰ: NGƯỜI BỆNH TRƯỚC, MẪU XÉT NGHIỆM SAU
      */
     private void createMau3TotalRow(Sheet sheet, int rowNum, Mau3Totals totals, CellStyle totalStyle) {
         Row row = sheet.createRow(rowNum);
@@ -1725,38 +1748,49 @@ public class NhatKyDieuDuongExportService {
         totalCell.setCellValue("TỔNG CỘNG");
         totalCell.setCellStyle(totalStyle);
 
-        // Khoa Xét nghiệm
-        setCellValue(row, colNum++, totals.xnTongSoMau, totalStyle);
-        setCellValue(row, colNum++, totals.xnMauNgoaiTru, totalStyle);
-        setCellValue(row, colNum++, totals.xnMauNoiTru, totalStyle);
-        setCellValue(row, colNum++, totals.xnMauCapCuu, totalStyle);
+        // ✅ NHÓM 1: Người bệnh XÉT NGHIỆM (4 cột) - ĐỔI LÊN ĐẦU
         setCellValue(row, colNum++, totals.xnNbTongSo, totalStyle);
         setCellValue(row, colNum++, totals.xnNbNgoaiTru, totalStyle);
         setCellValue(row, colNum++, totals.xnNbNoiTru, totalStyle);
         setCellValue(row, colNum++, totals.xnNbCapCuu, totalStyle);
+
+        // ✅ NHÓM 2: Mẫu Xét nghiệm (4 cột) - ĐỔI XUỐNG THỨ 2
+        setCellValue(row, colNum++, totals.xnTongSoMau, totalStyle);
+        setCellValue(row, colNum++, totals.xnMauNgoaiTru, totalStyle);
+        setCellValue(row, colNum++, totals.xnMauNoiTru, totalStyle);
+        setCellValue(row, colNum++, totals.xnMauCapCuu, totalStyle);
+
+        // ✅ NHÓM 3: Loại xét nghiệm (4 cột) - KHÔNG ĐỔI
         setCellValue(row, colNum++, totals.xnHuyetHoc, totalStyle);
         setCellValue(row, colNum++, totals.xnSinhHoa, totalStyle);
         setCellValue(row, colNum++, totals.xnViSinh, totalStyle);
         setCellValue(row, colNum++, totals.xnGiaiPhauBenh, totalStyle);
 
-        // Khoa CĐHA
+        // ✅ NHÓM 4: Khoa CĐHA - X-quang (2 cột) - KHÔNG ĐỔI
         setCellValue(row, colNum++, totals.cdhaXqTongNb, totalStyle);
         setCellValue(row, colNum++, totals.cdhaXqTongPhim, totalStyle);
-        setCellValue(row, colNum++, totals.cdhaCTTongNb, totalStyle);
+
+        // ✅ NHÓM 5: CT Scanner (3 cột) - KHÔNG ĐỔI
+        setCellValue(row, colNum++, totals.cdhaCTCoCanQuangNb, totalStyle);
+        setCellValue(row, colNum++, totals.cdhaCTKhongCanQuangNb, totalStyle);
         setCellValue(row, colNum++, totals.cdhaCTTongPhim, totalStyle);
+
+        // ✅ NHÓM 6: Siêu âm (2 cột) - KHÔNG ĐỔI
         setCellValue(row, colNum++, totals.cdhaSATongNb, totalStyle);
         setCellValue(row, colNum++, totals.cdhaSATongSo, totalStyle);
+
+        // ✅ LOG KIỂM TRA
+        logger.info("✅ Mau3 total row created with {} columns (new order: NB first)", colNum - 1);
     }
 
     /**
      * Set column widths cho mẫu 3
      */
     private void setMau3ColumnWidths(Sheet sheet) {
-        // Cột ngày rộng hơn
-        sheet.setColumnWidth(0, 2300);
+        sheet.setColumnWidth(0, 2300); // Cột ngày
 
-        // Các cột dữ liệu với text dọc
-        for (int i = 1; i < 19; i++) { // 18 columns data
+        // ✅ SỬA LẠI: 1 CỘT NGÀY + 19 CỘT DỮ LIỆU = 20 CỘT TOTAL
+        for (int i = 1; i <= 19; i++) { // 1-19 (19 columns data)
             sheet.setColumnWidth(i, 1200);
         }
     }

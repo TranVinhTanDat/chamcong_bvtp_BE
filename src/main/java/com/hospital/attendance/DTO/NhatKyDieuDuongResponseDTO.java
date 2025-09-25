@@ -64,8 +64,11 @@ public class NhatKyDieuDuongResponseDTO {
     private Integer sondeTieu;
     private Integer hutDamNhot;
 
+    private Integer truyenMau;
+
     // Phân cấp chăm sóc
-    private Integer csCapI;
+    private Integer tongCsCapI;
+    private Integer csCapIMoi;
     private Integer csCapII;
     private Integer csCapIII;
 
@@ -86,8 +89,7 @@ public class NhatKyDieuDuongResponseDTO {
     // Tình hình nhân sự
     private Integer dieuDuong;
     private Integer hoSinh;
-    private Integer kyThuatVien;
-    private Integer ySi;
+    private Integer kyThuatY;
     private Integer nhanSuKhac;
     private Integer hoLyNhanSu;
     private Integer tongNhanSu;
@@ -120,9 +122,7 @@ public class NhatKyDieuDuongResponseDTO {
     private Integer thucHanhKLuong;
     private Integer nhanSuTangCuong;
     private Integer svDdHs;
-    private Integer svYSi;
-    private Integer svKtv;
-    private Integer svDuoc;
+    private Integer svKty;
 
 
     // === THÔNG TIN MẪU 3 - KHỐI CẬN LÂM SÀNG ===
@@ -151,8 +151,10 @@ public class NhatKyDieuDuongResponseDTO {
     private Integer cdhaXqTongPhim;
 
     // Khoa CĐHA - CT Scanner
-    private Integer cdhaCTTongNb;
+    private Integer cdhaCTCoCanQuangNb;
+    private Integer cdhaCTKhongCanQuangNb;
     private Integer cdhaCTTongPhim;
+
 
     // Khoa CĐHA - Siêu âm
     private Integer cdhaSATongNb;
@@ -231,9 +233,11 @@ public class NhatKyDieuDuongResponseDTO {
         dto.setSondeDaDay(entity.getSondeDaDay());
         dto.setSondeTieu(entity.getSondeTieu());
         dto.setHutDamNhot(entity.getHutDamNhot());
+        dto.setTruyenMau(entity.getTruyenMau());
 
         // Phân cấp chăm sóc
-        dto.setCsCapI(entity.getCsCapI());
+        dto.setTongCsCapI(entity.getTongCsCapI());
+        dto.setCsCapIMoi(entity.getCsCapIMoi());
         dto.setCsCapII(entity.getCsCapII());
         dto.setCsCapIII(entity.getCsCapIII());
 
@@ -253,8 +257,7 @@ public class NhatKyDieuDuongResponseDTO {
         // Mẫu 2 - Thông tin nhân sự
         dto.setDieuDuong(entity.getDieuDuong());
         dto.setHoSinh(entity.getHoSinh());
-        dto.setKyThuatVien(entity.getKyThuatVien());
-        dto.setYSi(entity.getYSi());
+        dto.setKyThuatY(entity.getKyThuatY());
         dto.setNhanSuKhac(entity.getNhanSuKhac());
         dto.setHoLyNhanSu(entity.getHoLyNhanSu());
         dto.setTongNhanSu(entity.getTongNhanSu());
@@ -287,9 +290,7 @@ public class NhatKyDieuDuongResponseDTO {
         dto.setThucHanhKLuong(entity.getThucHanhKLuong());
         dto.setNhanSuTangCuong(entity.getNhanSuTangCuong());
         dto.setSvDdHs(entity.getSvDdHs());
-        dto.setSvYSi(entity.getSvYSi());
-        dto.setSvKtv(entity.getSvKtv());
-        dto.setSvDuoc(entity.getSvDuoc());
+        dto.setSvKty(entity.getSvKty());
 
 
         // Mẫu 3 - Khoa Xét nghiệm
@@ -306,10 +307,11 @@ public class NhatKyDieuDuongResponseDTO {
         dto.setXnViSinh(entity.getXnViSinh());
         dto.setXnGiaiPhauBenh(entity.getXnGiaiPhauBenh());
 
-// Mẫu 3 - Khoa CĐHA
+        // Mẫu 3 - Khoa CĐHA
         dto.setCdhaXqTongNb(entity.getCdhaXqTongNb());
         dto.setCdhaXqTongPhim(entity.getCdhaXqTongPhim());
-        dto.setCdhaCTTongNb(entity.getCdhaCTTongNb());
+        dto.setCdhaCTCoCanQuangNb(entity.getCdhaCTCoCanQuangNb());
+        dto.setCdhaCTKhongCanQuangNb(entity.getCdhaCTKhongCanQuangNb());
         dto.setCdhaCTTongPhim(entity.getCdhaCTTongPhim());
         dto.setCdhaSATongNb(entity.getCdhaSATongNb());
         dto.setCdhaSATongSo(entity.getCdhaSATongSo());

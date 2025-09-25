@@ -174,10 +174,18 @@ public class NhatKyDieuDuong {
     @Min(value = 0, message = "Hút đàm nhớt không được âm")
     private Integer hutDamNhot = 0;
 
+    @Column(name = "truyen_mau")
+    @Min(value = 0, message = "Truyền máu không được âm")
+    private Integer truyenMau = 0;
+
     // Phân cấp chăm sóc
-    @Column(name = "cs_cap_i")
-    @Min(value = 0, message = "CS cấp I không được âm")
-    private Integer csCapI = 0;
+    @Column(name = "tong_cs_cap_i")
+    @Min(value = 0, message = "Tổng CS cấp I không được âm")
+    private Integer tongCsCapI = 0;
+
+    @Column(name = "cs_cap_i_moi")
+    @Min(value = 0, message = "CS cấp I mới không được âm")
+    private Integer csCapIMoi = 0;
 
     @Column(name = "cs_cap_ii")
     @Min(value = 0, message = "CS cấp II không được âm")
@@ -242,13 +250,13 @@ public class NhatKyDieuDuong {
     @Min(value = 0, message = "Hộ sinh không được âm")
     private Integer hoSinh = 0;
 
-    @Column(name = "ky_thuat_vien")
-    @Min(value = 0, message = "Kỹ thuật viên không được âm")
-    private Integer kyThuatVien = 0;
+    @Column(name = "ky_thuat_y")
+    @Min(value = 0, message = "Kỹ thuật y không được âm")
+    private Integer kyThuatY = 0;
 
-    @Column(name = "y_si")
-    @Min(value = 0, message = "Y sĩ không được âm")
-    private Integer ySi = 0;
+//    @Column(name = "y_si")
+//    @Min(value = 0, message = "Y sĩ không được âm")
+//    private Integer ySi = 0;
 
     @Column(name = "nhan_su_khac")
     @Min(value = 0, message = "Nhân sự khác không được âm")
@@ -357,17 +365,17 @@ public class NhatKyDieuDuong {
     @Min(value = 0, message = "SV ĐD-HS không được âm")
     private Integer svDdHs = 0;
 
-    @Column(name = "sv_y_si")
-    @Min(value = 0, message = "SV Y sĩ không được âm")
-    private Integer svYSi = 0;
+//    @Column(name = "sv_y_si")
+//    @Min(value = 0, message = "SV Y sĩ không được âm")
+//    private Integer svYSi = 0;
 
-    @Column(name = "sv_ktv")
-    @Min(value = 0, message = "SV KTV không được âm")
-    private Integer svKtv = 0;
+    @Column(name = "sv_kty")
+    @Min(value = 0, message = "SV KTY không được âm")
+    private Integer svKty = 0;
 
-    @Column(name = "sv_duoc")
-    @Min(value = 0, message = "SV Dược không được âm")
-    private Integer svDuoc = 0;
+//    @Column(name = "sv_duoc")
+//    @Min(value = 0, message = "SV Dược không được âm")
+//    private Integer svDuoc = 0;
 
 
     // === THÔNG TIN MẪU 3 - KHỐI CẬN LÂM SÀNG ===
@@ -434,9 +442,13 @@ public class NhatKyDieuDuong {
     private Integer cdhaXqTongPhim = 0;
 
     // Khoa CĐHA - CT Scanner
-    @Column(name = "cdha_ct_tong_nb")
-    @Min(value = 0, message = "CĐHA CT tổng NB không được âm")
-    private Integer cdhaCTTongNb = 0;
+    @Column(name = "cdha_ct_co_can_quang_nb")
+    @Min(value = 0, message = "CĐHA CT có cản quang NB không được âm")
+    private Integer cdhaCTCoCanQuangNb = 0;
+
+    @Column(name = "cdha_ct_khong_can_quang_nb")
+    @Min(value = 0, message = "CĐHA CT không cản quang NB không được âm")
+    private Integer cdhaCTKhongCanQuangNb = 0;
 
     @Column(name = "cdha_ct_tong_phim")
     @Min(value = 0, message = "CĐHA CT tổng phim không được âm")
